@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "my-software": {
+      "enabled": false,
+      "command": "python",
+      "args": ["C:/your-software/mcp_server.py"],
+      "allowed_tools": ["get_status", "create_note", "delete_note", "send_message"],
+      "routine_tools": ["get_status", "create_note"],
+      "confirmation_tools": ["delete_note", "send_message"]
+    }
+  }
+}
