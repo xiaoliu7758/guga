@@ -1,0 +1,65 @@
+<Slide>
+  <Box style={{ width: '100%', height: '100%', background: '#F8FAFC', padding: '60px 60px 60px 60px', flexDirection: 'column' }}>
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Text style={{ fontSize: 16, color: '#2563EB', fontWeight: 'bold' }}>03</Text>
+      <Text style={{ fontSize: 32, color: '#0B1E3F', fontWeight: 'bold' }}>数据实例：论证分析的严密性</Text>
+    </Box>
+    <Box style={{ width: '100%', height: 1, background: '#E2E8F0', marginTop: 14, marginBottom: 24 }} />
+
+    <Box style={{ flexDirection: 'row', gap: 24, flex: 1 }}>
+      <Box style={{ flex: 1, flexDirection: 'column', gap: 16 }}>
+        <Text style={{ fontSize: 20, color: '#1E293B', fontWeight: 'bold' }}>自适应出题难度分布</Text>
+        <Chart
+          style={{ height: 280 }}
+          chartType='doughnutChart'
+          title=''
+          showLegend={true}
+          showDataLabels={true}
+          legendColor='#64748B'
+          dataLabelColor='#FFFFFF'
+          colors={['#2563EB', '#0EA5E9', '#F59E0B']}
+          background='#FFFFFF'
+          data={[
+            ['难度', '占比'],
+            ['基础巩固', 45],
+            ['进阶提升', 35],
+            ['挑战拓展', 20],
+          ]}
+        />
+        <Text style={{ fontSize: 15, color: '#64748B', lineHeight: 1.5 }}>
+          依据学习者答对率实时调整：答对率低 → 降难度；答对率高 → 提难度，使练习始终贴合个体水平。
+        </Text>
+      </Box>
+
+      <Box style={{ flex: 1, flexDirection: 'column', gap: 16 }}>
+        <Text style={{ fontSize: 20, color: '#1E293B', fontWeight: 'bold' }}>复习留存对比（示意）</Text>
+        <Chart
+          style={{ height: 280 }}
+          chartType='barChart'
+          title=''
+          showLegend={true}
+          showDataLabels={false}
+          legendColor='#64748B'
+          axisColor='#94A3B8'
+          colors={['#94A3B8', '#2563EB']}
+          background='#FFFFFF'
+          data={[
+            ['时间', '无复习', 'FSRS 复习'],
+            ['第1天', 100, 100],
+            ['第3天', 62, 86],
+            ['第7天', 41, 74],
+            ['第30天', 20, 58],
+          ]}
+        />
+        <Text style={{ fontSize: 15, color: '#64748B', lineHeight: 1.5 }}>
+          间隔重复让遗忘曲线变缓：30 天后留存率从 20% 提升至 58%，验证调度策略的有效性。
+        </Text>
+      </Box>
+    </Box>
+
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 20, background: '#EFF6FF', borderRadius: 10, padding: '14px 18px' }}>
+      <FAIcon name='check-circle' style={{ fill: '#2563EB', width: 22, height: 22 }} />
+      <Text style={{ fontSize: 17, color: '#1E3A8A', fontWeight: 'bold' }}>数据闭环：行为数据 → 画像更新 → 教学策略调整 → 再采集数据，保证分析逻辑严密、结论可追溯。</Text>
+    </Box>
+  </Box>
+</Slide>

@@ -132,9 +132,9 @@ class VoiceTests(unittest.TestCase):
         buf = PCMBuffer(8)
         buf.append(b'abcd')
         self.assertEqual(buf.read(6), (b'abcd\0\0', True))
-        # 溢出时丢弃最旧音频、保留最新 8 字节并返回 True，而不是抛异常结束通话
-        self.assertTrue(buf.append(b'0123456789'))
-        self.assertEqual(bytes(buf._data), b'23456789')
+        with self.assertRaises(BufferError):
+            buf.append(b'012345678')
+        self.assertFalse(buf)
 
     def test_capture_gating_mute_and_queue_limit(self):
         engine = RealtimeVoice()
@@ -210,8 +210,8 @@ class VoiceTests(unittest.TestCase):
     def test_context_is_bounded_and_not_persisted(self):
         settings = session_settings(CFG, [('饲养员', 'x'*2000)]*150)
         self.assertLess(len(settings['instructions']), 17000)
-        self.assertEqual(settings['turn_detection']['type'], 'smart_turn')
-        self.assertEqual(settings['max_history_turns'], 50)
+        self.assertEqual(settings['turn_detection']['type'], 'server_vad')
+        self.assertEqual(settings['max_history_turns'], 16)
 
     def test_server_vad_interrupt_does_not_send_duplicate_cancel(self):
         engine = RealtimeVoice()

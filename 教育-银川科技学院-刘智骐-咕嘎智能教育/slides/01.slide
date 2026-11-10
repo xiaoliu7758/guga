@@ -1,0 +1,33 @@
+<Slide>
+  <Box style={{ width: '100%', height: '100%', position: 'relative', background: 'linear-gradient(135deg, #0B1E3F 0%, #14346B 45%, #2563EB 100%)', padding: '60px 60px 60px 60px' }}>
+    {/* 背景装饰几何 */}
+    <svg width={360} height={360} viewBox='0 0 360 360' style={{ position: 'absolute', right: 0, top: 0, opacity: 0.10 }}>
+      <circle cx='180' cy='180' r='150' fill='none' stroke='#FFFFFF' strokeWidth='2' />
+      <circle cx='180' cy='180' r='110' fill='none' stroke='#FFFFFF' strokeWidth='2' />
+      <circle cx='180' cy='180' r='70' fill='#FFFFFF' />
+    </svg>
+    <svg width={300} height={300} viewBox='0 0 300 300' style={{ position: 'absolute', left: 0, bottom: 0, opacity: 0.06 }}>
+      <circle cx='150' cy='150' r='140' fill='none' stroke='#FFFFFF' strokeWidth='3' />
+    </svg>
+
+    <Box style={{ position: 'relative', zIndex: 1, flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
+      <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 28 }}>
+        <Box style={{ width: 52, height: 52, borderRadius: 14, background: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center' }}>
+          <FAIcon name='graduation-cap' style={{ fill: '#7DD3FC', width: 30, height: 30 }} />
+        </Box>
+        <Text style={{ fontSize: 22, color: '#93C5FD', fontWeight: 'bold', letterSpacing: 4 }}>教育 · AI Agent 作品展示</Text>
+      </Box>
+
+      <Text style={{ fontSize: 60, color: '#FFFFFF', fontWeight: 'bold', lineHeight: 1.2, letterSpacing: 2 }}>咕嘎智能教育</Text>
+      <Text style={{ fontSize: 30, color: '#BFDBFE', lineHeight: 1.5, marginTop: 20 }}>一只会「学什么教什么」的 AI 桌宠学习伙伴</Text>
+
+      <Box style={{ width: 220, height: 1, background: 'rgba(255,255,255,0.35)', marginTop: 40, marginBottom: 40 }} />
+
+      <Box style={{ flexDirection: 'row', gap: 40 }}>
+        <Text style={{ fontSize: 18, color: '#E0E7FF' }}>命题领域 · 教育</Text>
+        <Text style={{ fontSize: 18, color: '#E0E7FF' }}>学校 · 银川科技学院</Text>
+      </Box>
+      <Text style={{ fontSize: 18, color: '#E0E7FF', marginTop: 12 }}>队长 · 刘智骐</Text>
+    </Box>
+  </Box>
+</Slide>

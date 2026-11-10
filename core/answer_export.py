@@ -206,3 +206,49 @@ def _outline_to_html_items(outline):
 
     html_out, _ = render(0, 1)
     return html_out
+
+
+def summarize_speech(text, max_chars=180):
+    """把长回答提炼成适合朗读的「挑重点」精华版（口语化、短小）。
+
+    用 LLM 压缩成 2-4 句重点；失败则退化为按句截断。返回可直接朗读的短文本。
+    """
+    text = str(text or '').strip()
+    if not text:
+        return text
+    if len(text) <= max_chars:
+        return text
+    cfg = _load_cfg()
+    key = (cfg.get('api_key') or '').strip()
+    if key and not key.startswith('YOUR_'):
+        try:
+            base = (cfg.get('base_url') or '').rstrip('/')
+            if base:
+                prompt = (
+                    '把下面这段长回答提炼成适合语音朗读的重点摘要：'
+                    '只保留最核心的结论和要点，用口语化短句，2-4 句，'
+                    '总字数不超过 %d 字，不要列表、不要标题、不要解释。'
+                    '直接输出摘要正文。\n\n%s' % (max_chars, text)
+                )
+                r = requests.post(
+                    base + '/chat/completions',
+                    headers={'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json'},
+                    json={'model': cfg.get('model', 'qwen-plus'),
+                          'messages': [{'role': 'user', 'content': prompt}],
+                          'max_tokens': 300, 'temperature': 0.3},
+                    timeout=60)
+                if r.status_code == 200:
+                    content = (r.json().get('choices') or [{}])[0].get('message', {}).get('content', '')
+                    content = str(content).strip()
+                    if content:
+                        return content
+        except Exception:
+            pass
+    # 降级：按句截断到 max_chars，尽量在句末断开
+    sentences = re.split(r'(?<=[。！？!?])', text)
+    out = ''
+    for s in sentences:
+        if len(out) + len(s) > max_chars:
+            break
+        out += s
+    return (out.strip() + '…（完整内容已存文档）') if out.strip() else text[:max_chars] + '…'

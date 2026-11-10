@@ -1,17 +1,40 @@
 """Deterministic completion checks for tool side effects and verification receipts."""
+import re
 
 INPUT_ACTIONS={"click","double_click","drag","scroll","hotkey","type","fill","editor_select_tail","uia"}
-VERIFY_ACTIONS={"observe","accessibility"}
+VERIFY_ACTIONS={"observe","accessibility","uia_read"}
 ACTION_WORDS=("打开","启动","关闭","读取","修改","写入","保存","运行","安装","下载",
               "删除","移动","复制","重命名","上传","提交","点击","输入","执行","修复",
               "测试","检查窗口","截屏","截图","看屏幕","整理文件","创建文件","发送","发一段","发一句",
               "生成","思维导图","提炼","知识点","出题","自测","复习卡","学习笔记","导图","整理笔记")
-QUESTION_WORDS=("如何","怎么","为什么","解释一下","有什么区别","是什么","教我","步骤是")
+# Questions about how/why something works are not action requests even when they
+# mention an action word ("下载速度慢是什么原因"). A real request keeps an
+# explicit imperative marker, so "能不能帮我打开浏览器" still executes.
+QUESTION_WORDS=("如何","怎么","为什么","解释一下","有什么区别","是什么","什么是","教我","步骤是",
+                "什么","哪些","哪个","多少","多久","哪里","谁","何时","怎样","怎么样","是否",
+                "是不是","有没有","吗","呢","？","?")
+REQUEST_WORDS=("帮我","给我","替我","麻烦","请你","我要你","现在开始","执行一下","跑一下",
+               "去把","去打开","去下载","去执行")
+
+
+def _question_like(text):
+    return any(word in text for word in QUESTION_WORDS)
 
 
 def requires_execution(prompt):
-    text=str(prompt or "").lower()
-    return any(word in text for word in ACTION_WORDS) and not any(word in text for word in QUESTION_WORDS)
+    text=str(prompt or "").lower().strip()
+    if not any(word in text for word in ACTION_WORDS):return False
+    value=re.sub(r'^(?:小?咕嘎[，,\s]*)?(?:(?:请你?|麻烦你?|帮我|给我|替我|我要你|你能不能|你能|你可以|你可不可以|能不能|能否|可不可以|可以)[，,\s]*)*','',text)
+    if re.match(r'^(?:解释|讲解|告诉我|教我).*(?:如何|怎么|为什么|是什么|什么意思)',value):return False
+    imperative=re.match(r'^('+'|'.join(sorted(ACTION_WORDS,key=len,reverse=True))+r')[，,:：\s]*(.*)',value)
+    if imperative:
+        # A question inside a message/field is an action argument, not the
+        # user's intent. Only inspect the leading instruction clause.
+        clause=re.split(r'[，,。;；]|(?:发送|发给)',imperative.group(2),maxsplit=1)[0]
+        knowledge=tuple(w for w in QUESTION_WORDS if w not in ('吗','呢','？','?'))
+        if clause and not any(w in clause for w in knowledge):return True
+    if _question_like(text) and not any(word in text for word in REQUEST_WORDS):return False
+    return True
 
 
 class ExecutionLedger:
@@ -40,6 +63,19 @@ class ExecutionLedger:
                 self.pending.append(dict(category='application_window',hwnd=None,
                     description='发现多个软件窗口，尚未选择并观察目标窗口'))
             return
+        if name=='browser' and action not in ('open','close_tab'):
+            page=value.get('page_id')
+            if action in ('click','press','upload','scroll') and value.get('action_sent') is not False:
+                self.pending.append(dict(category='browser_input',page_id=args.get('page_id'),
+                    description='浏览器输入已尝试；需要重新snapshot读取页面并核对目标结果'))
+            if action in ('snapshot','wait') and ok and value.get('snapshot_id'):
+                self.pending=[p for p in self.pending if not (p.get('category')=='browser_input' and p.get('page_id')==page)]
+                self.failures.pop('browser_session',None)
+            elif not ok:self.failures['browser_session']='专用浏览器步骤未获得成功回执；先观察核对已有结果'
+            elif action in ('fill_form','download') and value.get('verified'):
+                self.completed.append(dict(category='browser_verified',action=action))
+                self.failures.pop('browser_session',None)
+            return
         if name in ("wechat_send_self","wechat","web_search","browser"):
             if name=='wechat' and action=='open' and self.expects_send and ok:
                 self.pending=[p for p in self.pending if p.get('category')!='wechat_message']
@@ -54,13 +90,20 @@ class ExecutionLedger:
                 for item in self.pending:
                     if item.get('category')=='application_window':item['hwnd']=args.get('hwnd')
             if action in INPUT_ACTIONS and ok:
+                verification=result.get('verification') or {}
+                if (action=='uia' and result.get('verified') is True and verification.get('matched') is True
+                        and verification.get('kind') in ('value_equals','keyboard_focus')):
+                    self.completed.append(dict(category='computer_verified',action=action,hwnd=args.get('hwnd')))
+                    self.failures.pop('computer',None)
+                    return
                 item=dict(category="computer_input",action=action,hwnd=args.get("hwnd"),
                           description=f"computer.{action} 已发送，尚未复查")
                 self.pending.append(item)
                 self.failures.pop("computer",None)
             elif action in VERIFY_ACTIONS and ok:
-                self.pending=[x for x in self.pending if x.get("category")!="computer_input"]
                 observed=args.get('hwnd') or result.get('hwnd')
+                self.pending=[x for x in self.pending if not (x.get('category')=='computer_input' and
+                    (not x.get('hwnd') or (observed and x.get('hwnd')==observed)))]
                 if observed:
                     self.pending=[x for x in self.pending if not (x.get('category')=='application_window' and x.get('hwnd')==observed)]
                 self.failures.pop("computer",None)

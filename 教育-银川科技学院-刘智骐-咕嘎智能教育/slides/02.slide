@@ -1,0 +1,26 @@
+<Slide>
+  <Box style={{ width: '100%', height: '100%', background: '#F8FAFC', padding: '60px 60px 60px 60px', flexDirection: 'column' }}>
+    <Text style={{ fontSize: 40, color: '#0B1E3F', fontWeight: 'bold', letterSpacing: 1 }}>目录</Text>
+    <Text style={{ fontSize: 16, color: '#64748B', marginTop: 6 }}>CONTENTS</Text>
+    <Box style={{ width: '100%', height: 1, background: '#E2E8F0', marginTop: 20, marginBottom: 28 }} />
+
+    <Box style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 20 }}>
+      {[
+        ['01', '作品背景与说明', '作品缘起与参考来源'],
+        ['02', '数据收集与处理', '数据来源 · 知识库 · 预处理'],
+        ['03', '分析过程', '方法选择 · 逻辑论证'],
+        ['04', '创新性与独特视角', '创新点 · 跨学科视角'],
+        ['05', '结果解释与建议', '结果解读 · 问题建议 · 风险'],
+        ['06', '应用结果呈现', '对话界面 · 提示词示例'],
+      ].map((item, idx) => (
+        <Box key={idx} style={{ width: '48%', flexDirection: 'row', alignItems: 'center', gap: 16, padding: '18px 20px', background: '#FFFFFF', borderRadius: 12, border: '1px solid #E8EDF5' }}>
+          <Text style={{ fontSize: 34, color: '#2563EB', fontWeight: 'bold', width: 56 }}>{item[0]}</Text>
+          <Box style={{ flexDirection: 'column' }}>
+            <Text style={{ fontSize: 22, color: '#1E293B', fontWeight: 'bold' }}>{item[1]}</Text>
+            <Text style={{ fontSize: 15, color: '#94A3B8', marginTop: 4 }}>{item[2]}</Text>
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  </Box>
+</Slide>

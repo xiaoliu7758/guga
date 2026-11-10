@@ -1,0 +1,50 @@
+<Slide>
+  <Box style={{ width: '100%', height: '100%', background: '#F8FAFC', padding: '60px 60px 60px 60px', flexDirection: 'column' }}>
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Text style={{ fontSize: 16, color: '#2563EB', fontWeight: 'bold' }}>03</Text>
+      <Text style={{ fontSize: 32, color: '#0B1E3F', fontWeight: 'bold' }}>分析方法选择</Text>
+    </Box>
+    <Box style={{ width: '100%', height: 1, background: '#E2E8F0', marginTop: 14, marginBottom: 28 }} />
+
+    <Box style={{ flexDirection: 'row', gap: 24, flex: 1 }}>
+      <Box style={{ flex: 1.1, flexDirection: 'column', gap: 16 }}>
+        {[
+          ['五阶段教学法', '目标→理解→前提→教学→练习，逐层递进，贴合认知规律', '#2563EB'],
+          ['学习风格画像', '置信度加权识别快进/稳扎/畏难等类型，动态适配讲解节奏', '#0EA5E9'],
+          ['自适应难度出题', '依据答对率动态升降难度，让练习始终处于最近发展区', '#6366F1'],
+          ['FSRS 间隔重复', '基于记忆遗忘曲线调度复习时机，最大化长期留存', '#8B5CF6'],
+        ].map((item, idx) => (
+          <Box key={idx} style={{ background: '#FFFFFF', borderRadius: 12, border: '1px solid #E8EDF5', padding: '16px 20px', flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
+            <Box style={{ width: 40, height: 40, borderRadius: 10, background: item[2] + '1A', justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={{ fontSize: 18, color: item[2], fontWeight: 'bold' }}>{idx + 1}</Text>
+            </Box>
+            <Box style={{ flexDirection: 'column', flex: 1 }}>
+              <Text style={{ fontSize: 20, color: '#1E293B', fontWeight: 'bold' }}>{item[0]}</Text>
+              <Text style={{ fontSize: 16, color: '#64748B', lineHeight: 1.5, marginTop: 3 }}>{item[1]}</Text>
+            </Box>
+          </Box>
+        ))}
+      </Box>
+
+      <Box style={{ flex: 0.9, background: '#FFFFFF', borderRadius: 12, border: '1px solid #E8EDF5', padding: '22px 24px', flexDirection: 'column', gap: 14 }}>
+        <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <FAIcon name='balance-scale' style={{ fill: '#F59E0B', width: 26, height: 26 }} />
+          <Text style={{ fontSize: 20, color: '#1E293B', fontWeight: 'bold' }}>选择依据</Text>
+        </Box>
+        <Text style={{ fontSize: 17, color: '#334155', lineHeight: 1.7 }}>
+          教育场景的核心矛盾是「<span style={{ fontWeight: 'bold', color: '#2563EB' }}>学习者差异大</span>」与「<span style={{ fontWeight: 'bold', color: '#2563EB' }}>教学资源通用</span>」。因此方法选择遵循三个原则：
+        </Text>
+        {[
+          ['认知科学优先', '五阶段与 FSRS 均有成熟实证基础'],
+          ['个性化适配', '画像与自适应难度响应个体差异'],
+          ['可闭环验证', '每次练习产出数据反哺画像更新'],
+        ].map((item, idx) => (
+          <Box key={idx} style={{ background: '#F8FAFC', borderRadius: 10, padding: '14px 16px' }}>
+            <Text style={{ fontSize: 17, color: '#1E293B', fontWeight: 'bold' }}>{item[0]}</Text>
+            <Text style={{ fontSize: 15, color: '#64748B', lineHeight: 1.5, marginTop: 4 }}>{item[1]}</Text>
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  </Box>
+</Slide>

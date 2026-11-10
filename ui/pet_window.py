@@ -100,7 +100,7 @@ class PetWindow(QWidget):
         from ui.pet_physics import DesktopPetPhysics
         self._pet_physics=DesktopPetPhysics(self,self._anim2d,lambda:self._config.save_pos(self.x(),self.y()))
         self._gaze_timer = QTimer(self)
-        self._gaze_timer.setInterval(80)
+        self._gaze_timer.setInterval(160)
         self._gaze_timer.timeout.connect(self._update_avatar_gaze)
         self._gaze_timer.start()
 
@@ -135,8 +135,10 @@ class PetWindow(QWidget):
         self._pending_voice_gesture = None
         from ui.speech_bubble import PetSpeechBubble
         self._agent_bubble = PetSpeechBubble(self)
-        self._agent_bubble.clicked.connect(self._open_bubble_chat)
+        self._agent_bubble.clicked.connect(self._on_bubble_clicked)
         self._agent_bubble.end_call.connect(self._end_agent_voice)
+        self._agent_bubble.talk_started.connect(self._start_bubble_talk)
+        self._agent_bubble.talk_stopped.connect(self._finish_bubble_talk)
         self._chat_view = None
         self._chat_history = []
         self._input_mode = "chat"
@@ -156,6 +158,7 @@ class PetWindow(QWidget):
         # pay stylesheet/DWM window creation latency.
         self._pet_menu = None
         QTimer.singleShot(1200, self._ensure_pet_menu)
+        QTimer.singleShot(1000, self._warm_agent_panel)
 
         # --- 核心 ---
         self._status = StatusSystem(self)
@@ -197,14 +200,14 @@ class PetWindow(QWidget):
         self._bg_sampling = False
         self._bg_fail_count = 0
         self._bg_timer = QTimer(self)
-        self._bg_timer.setInterval(15000)
+        self._bg_timer.setInterval(60000)
         self._bg_timer.timeout.connect(self._sample_background)
         self._bg_timer.start()
 
         self._save_timer = QTimer(self)
         # --- 自动观战：轮询日志，战斗开始自动给胜率+建议（及时性核心） ---
         self._watch_timer = QTimer(self)
-        self._watch_timer.setInterval(8000)
+        self._watch_timer.setInterval(30000)
         self._watch_timer.timeout.connect(self._auto_watch)
         self._watch_timer.start()
         self._watch_phase = ''       # 上次观测到的阶段: ''/'recruit'/'combat'
@@ -295,7 +298,7 @@ class PetWindow(QWidget):
         m.addAction("显示/隐藏").triggered.connect(
             lambda: self.hide() if self.isVisible() else (self.show(), self._force_top()))
         m.addSeparator()
-        m.addAction("💬 咕嘎智能体 · 对话与项目").triggered.connect(self._open_agent_chat)
+        m.addAction("💬 展开完整对话（聊天/项目）").triggered.connect(self._open_agent_chat)
         m.addAction("🎙 长语音 · 咕嘎智能体").triggered.connect(self._open_agent_voice)
         team=m.addMenu("👥 多智能体")
         team.addAction("召唤 002 · 大肥鱼").triggered.connect(lambda:self._multi_agent.summon('002'))
@@ -417,7 +420,7 @@ class PetWindow(QWidget):
     def _sample_background(self):
         """异步截取窗口背后桌面小块区域计算平均亮度（0~1），失败保持上次值。
         防卡死: 连续失败后退避, 避免锁屏/远程会话下线程堆积。"""
-        if self._bg_sampling:
+        if self._bg_sampling or not self.isVisible() or self.isMinimized():
             return
         if 3 <= self._bg_fail_count < 12:
             self._bg_fail_count += 1
@@ -583,14 +586,14 @@ class PetWindow(QWidget):
         battle = menu.addMenu('战旗')
         self._menu_netcut = battle.addAction("⚡ 一键拔线（每局最多 9 次，F1）")
         self._menu_netcut.triggered.connect(self._netcut)
-        menu.addAction("💬 对话 · 咕嘎智能体").triggered.connect(self._open_agent_chat)
+        menu.addAction("💬 展开完整对话").triggered.connect(self._open_agent_chat)
         menu.addAction("🎙 长语音 · 边聊边执行").triggered.connect(self._open_agent_voice)
         team = menu.addMenu("👥 多智能体")
         team.addAction("召唤 002 · 大肥鱼").triggered.connect(lambda:self._multi_agent.summon('002'))
         team.addAction("召唤 003 · Dora").triggered.connect(lambda:self._multi_agent.summon('003'))
         team.addAction("同时召唤大肥鱼和 Dora").triggered.connect(self._multi_agent.summon_pair)
         team.addAction("让咕嘎与大肥鱼讨论…").triggered.connect(lambda:self._multi_agent.start_discussion(('001','002')))
-        team.addAction("和当前咕嘎对话").triggered.connect(self._open_agent_chat)
+        team.addAction("展开完整对话 · 当前同伴").triggered.connect(self._open_agent_chat)
         menu.addAction('截图分析').triggered.connect(lambda:self._screen_tools.begin('ask'))
         menu.addAction('解释').triggered.connect(lambda:self._screen_tools.begin('explain'))
         menu.addAction('🧠 学习工具箱').triggered.connect(self._open_study_toolbox)
@@ -633,7 +636,7 @@ class PetWindow(QWidget):
         stage.addAction("停止唱歌").triggered.connect(
             lambda: self._ensure_agent_panel().runtime.music.stop())
         talk_menu = menu.addMenu("🎙 原语音功能")
-        talk_menu.addAction("千问长语音通话").triggered.connect(self._open_realtime_voice)
+        talk_menu.addAction("千问长语音 · 屏幕辅助与任务执行").triggered.connect(self._open_realtime_voice)
         talk_menu.addAction("千问语音设置").triggered.connect(self._configure_realtime_voice)
         battle.addAction("📋 日志分析").triggered.connect(self._review_bg_logs)
         battle.addAction("🎮 战局分析 / 实战操作").triggered.connect(self._open_bg_live)
@@ -663,13 +666,36 @@ class PetWindow(QWidget):
 
     def _on_user_interaction(self):
         """Only explicit human input wakes a held sleepy expression."""
+        panel=getattr(self,'_agent_panel',None)
+        if panel is not None:
+            import time
+            panel._last_user_activity=time.monotonic()
         return self._anim2d.user_interaction()
+
+    def hideEvent(self,event):
+        anim=getattr(self,'_anim',None);gaze=getattr(self,'_gaze_timer',None)
+        if anim is not None:anim.stop()
+        if gaze is not None:gaze.stop()
+        super().hideEvent(event)
+
+    def showEvent(self,event):
+        super().showEvent(event)
+        anim=getattr(self,'_anim',None);gaze=getattr(self,'_gaze_timer',None)
+        if anim is not None:anim.start()
+        if gaze is not None:gaze.start()
 
     def _click(self):
         self._anim2d.tap()
         self._on_user_interaction()
         self._click_count += 1
         self._status.happy = min(100.0, self._status.happy + 3)
+        # 点击打断：若咕嘎正在说话，第一次点击立即停止，不再叠加新回复
+        if getattr(self, '_tts', None) is not None and self._tts.is_speaking:
+            self._tts.stop()
+            self._bubble_timer.stop()
+            self._bubble_text = ''
+            self.update()
+            return
         # 招募阶段点击企鹅 = 讨论 → 未来阵容展望（轨道⑤；日志检测到在招募阶段才触发）
         try:
             from core import log_reader
@@ -746,6 +772,17 @@ class PetWindow(QWidget):
             self._agent_panel = AgentChatWindow(self,memory=getattr(self,'_agent_memory',None))
         return self._agent_panel
 
+    def _warm_agent_panel(self):
+        """Keep memory-based initiative available before the first chat click."""
+        try:
+            panel=self._ensure_agent_panel()
+            if panel and not panel.isVisible():panel.hide()
+        except Exception as exc:
+            try:
+                with open(os.path.join(os.path.dirname(__file__),'..','pet_debug.log'),'a',encoding='utf-8') as stream:
+                    stream.write('agent panel warmup failed: '+type(exc).__name__+'\n')
+            except OSError:pass
+
     def _open_agent_chat(self):
         self._ensure_agent_panel()
         self._agent_panel.show()
@@ -792,15 +829,24 @@ class PetWindow(QWidget):
         if self._agent_panel:
             self._agent_panel.voice_button.setChecked(False)
 
-    def _open_bubble_chat(self):
+    def _on_bubble_clicked(self):
+        """The bubble is the voice surface: a click starts/keeps the long call.
+
+        It must never open the full chat window: that steals focus and fights
+        the live microphone. The full conversation has explicit menu entries.
+        """
         self._on_user_interaction()
-        panel = self._ensure_agent_panel()
-        ident = self._agent_bubble.conversation_id
-        if ident and ident != panel.active_id and not (panel.busy or panel.voice_active):
-            try:
-                panel.open_conversation(ident)
-            except ValueError:
-                pass
+        panel = self._agent_panel
+        if panel is not None:
+            if panel.voice_active:
+                return
+            if panel.busy:
+                return
+        self._open_agent_voice()
+
+    def _open_bubble_chat(self):
+        """Compatibility entry: explicit full conversation, never a bubble click."""
+        self._on_user_interaction()
         self._open_agent_chat()
 
     def _show_agent_bubble(self, text, conversation_id=None):
@@ -808,6 +854,28 @@ class PetWindow(QWidget):
         self._bubble_timer.stop()
         self._agent_bubble.show_text(text,conversation_id)
         self.update()
+
+    def _say_agent_reply(self,text,expression=None,action='none',speak=False,conversation_id=None):
+        """One desktop bubble for agent speech; optional TTS does not draw another card."""
+        from core.embodiment import spoken_reply
+        inferred_expression,inferred_action,clean=spoken_reply(text)
+        if inferred_action!='none':action=inferred_action
+        if inferred_expression!='normal':expression=inferred_expression
+        self._show_agent_bubble(clean,conversation_id)
+        self._apply_agent_style(expression,action)
+        if speak and not self._realtime_active():self._tts.speak(clean)
+
+    def _apply_agent_style(self,expression=None,action='none'):
+        if expression and expression!='none':self._anim.set_expression(expression)
+        if action and action!='none':self._perform_gesture(action)
+
+    def _start_bubble_talk(self):
+        panel=self._ensure_agent_panel()
+        if not panel.start_bubble_short_voice():
+            self._agent_bubble.set_voice_state('idle')
+
+    def _finish_bubble_talk(self,cancel=False):
+        if self._agent_panel is not None:self._agent_panel.finish_bubble_short_voice(bool(cancel))
 
     def _on_ai_reply(self, text, expression, action):
         self._say_with_expression(text, expression, action)
@@ -900,7 +968,7 @@ class PetWindow(QWidget):
         self._input_edit.setPlainText("")
         self._input_mode = mode
         if mode == 'tutor':
-            self._input_edit.setPlaceholderText("问本鹅 Python/大模型问题...(Enter 发送)")
+            self._input_edit.setPlaceholderText("告诉本鹅你想学什么...(Enter 发送)")
         elif mode == 'quiz_answer':
             self._input_edit.setPlaceholderText("写出你的答案, 本鹅来点评...(Enter 发送)")
         else:
@@ -949,7 +1017,7 @@ class PetWindow(QWidget):
         lay = QVBoxLayout(panel)
         lay.setContentsMargins(12, 8, 12, 10)
         lay.setSpacing(4)
-        title = QLabel("📚 咕嘎助教对话  (Esc 关闭 · 拖动标题移动)")
+        title = QLabel("📚 咕嘎学习助教  (Esc 关闭 · 拖动标题移动)")
         title.setStyleSheet("color: #8acaff; font-size: 12px; font-weight: bold; padding: 2px;")
         title_row = QHBoxLayout()
         title_row.addWidget(title, 1)
@@ -1069,6 +1137,10 @@ class PetWindow(QWidget):
             self._open_bg_live()
             self._bg_live_panel.start(12)
             return
+        # 学习意图识别：用户自然说出"教我/我想学/学不会…"就自动进入助教讲解模式
+        if self._is_learning_intent(text):
+            self._tutor_ask_direct(text)
+            return
         ctx = ''
         try:
             from core import match_history
@@ -1081,6 +1153,28 @@ class PetWindow(QWidget):
                 f"调侃他（可爱不刻薄，自称本鹅）。", rag_query=text)
         else:
             self._ai.ask(text, rag_query=text)
+
+    @staticmethod
+    def _is_learning_intent(text):
+        """判断用户是否在表达"想学习/求讲解"的意图，命中则走助教模式。"""
+        import re
+        t = re.sub(r'^(?:请你?|麻烦你?|帮我|咕嘎[，, ]*)', '', str(text or '').strip())
+        patterns = (
+            r'(?:教我|教教我|讲讲|讲一下|给我讲|给我讲讲|我想学|我要学|我想了解|想弄懂|弄懂|'
+            r'学不会|不懂|没搞懂|帮我弄懂|帮我理解|解释一下|给我解释|什么是|啥是|是什么|'
+            r'怎么学|如何学|入门|零基础|从头学|补课|辅导我)',
+        )
+        return bool(re.search(patterns, t))
+
+    def _tutor_ask_direct(self, text):
+        """自然语言触发的助教讲解：直接用助教人设回答，不截屏（学英语/数学无需看屏幕）。"""
+        from core.tutor import TUTOR_SYSTEM
+        self._tts.set_tutor_mode(True)
+        self._ensure_chat_panel()
+        self._chat_append("饲养员", text)
+        self._chat_append("系统", "咕嘎进入学习模式，正在讲解...~")
+        self._show_chat_panel()
+        self._ai.ask(text, system_override=TUTOR_SYSTEM)
 
     def _hide_inline(self):
         if self._inline_input is not None:
@@ -1150,7 +1244,11 @@ class PetWindow(QWidget):
 
     def _realtime_active(self):
         engine = getattr(self, '_realtime_voice', None)
-        return bool(engine and engine.active)
+        if not engine or not engine.active:
+            return False
+        # A reconnecting thread is not an audible call: let local TTS speak and
+        # let the UI show "reconnecting" instead of pretending the call is fine.
+        return bool(getattr(engine, 'connected', True))
 
     def _configure_realtime_voice(self):
         from ui.voice_dialog import VoiceSettingsDialog
@@ -1164,43 +1262,8 @@ class PetWindow(QWidget):
         VoiceSettingsDialog(self).exec_()
 
     def _open_realtime_voice(self):
-        if self._agent_panel and self._agent_panel.voice_active:
-            self._agent_panel.voice_button.setChecked(False)
-        from core.realtime_voice import RealtimeVoice, load_settings, connection_url
-        from ui.voice_dialog import VoiceCallDialog, VoiceSettingsDialog
-        if self._realtime_active():
-            if self._voice_call_panel:
-                self._voice_call_panel.show()
-                self._voice_call_panel.raise_()
-            elif self._agent_panel:
-                self._agent_panel.status.setText('正在释放语音连接，请稍后重试')
-            return
-        try:
-            connection_url(load_settings())
-        except Exception:
-            if VoiceSettingsDialog(self).exec_() != VoiceSettingsDialog.Accepted:
-                return
-        if self._recording:
-            self._recording = False
-            if self._asr:
-                self._asr._recording = False
-        self._voice_mode = False
-        self._tts.stop()
-        self._on_tts_finished()
-        if self._voice_call_panel:
-            self._voice_call_panel.close()
-            self._voice_call_panel.deleteLater()
-        if self._realtime_voice:
-            self._realtime_voice.deleteLater()
-        self._realtime_voice = RealtimeVoice(self)
-        self._realtime_voice.transcript.connect(self._on_user_transcript)
-        self._realtime_voice.speaking.connect(self._on_realtime_speaking)
-        self._realtime_voice.status.connect(self._on_realtime_status)
-        self._realtime_voice.failed.connect(self._on_realtime_status)
-        self._realtime_voice.finished.connect(lambda: self._on_realtime_status('通话已结束'))
-        self._voice_call_panel = VoiceCallDialog(self._realtime_voice, self)
-        self._voice_call_panel.show()
-        self._realtime_voice.start()
+        """Keep the historical menu alias on the same screen-aware agent path."""
+        self._open_agent_voice()
 
     def _on_user_transcript(self, who, text):
         if who == '饲养员' and text.strip():
@@ -1381,16 +1444,16 @@ class PetWindow(QWidget):
             self._see_board()
             return
 
-        # Python/大模型助教 → 请教
+        # 通用学习助教 → 请教
         if name == 'ask_tutor':
-            self._say_with_expression("咕嘎~想问什么? 本鹅耐心讲解~", "happy", "peek")
+            self._say_with_expression("咕嘎~想学什么? 告诉本鹅, 什么都教~", "happy", "peek")
             self._tts.set_tutor_mode(True)
             self._ensure_chat_panel()
             self._show_chat_panel()
             self._open_input('tutor')
             return
 
-        # Python/大模型助教 → 出题
+        # 通用学习助教 → 出题
         if name == 'quiz_user':
             self._tts.set_tutor_mode(True)
             self._input_mode = 'quiz_answer'  # 标记: 接下来用户输入是答题(不截屏)
@@ -1399,7 +1462,7 @@ class PetWindow(QWidget):
             self._show_chat_panel()
             from core.tutor import TUTOR_QUIZ
             self._say_with_expression("咕嘎~本鹅出题考考你!", "playful", "point")
-            self._ai.ask("请出一道 Python/大模型中级工程师思考题, 然后等饲养员回答.",
+            self._ai.ask("请出一道饲养员当前正在学习主题的思考题, 然后等饲养员回答.",
                          system_override=TUTOR_QUIZ)
             return
 
@@ -1578,7 +1641,7 @@ class PetWindow(QWidget):
     # ==================== 自动观战（战斗开始自动分析） ====================
 
     def _auto_watch(self):
-        """每 4 秒轮询日志：检测招募→战斗转换并分析；绝不自动拔线。"""
+        """空闲30秒检查一次；检测到对局后提高到8秒；绝不自动拔线。"""
         if self._realtime_active():
             return
         import time as _time
@@ -1591,6 +1654,7 @@ class PetWindow(QWidget):
             from core import log_reader
             board = log_reader.read_current_board()
             if board is None:
+                self._watch_timer.setInterval(30000)
                 return
             # 对局结束 → 记录战绩（只记结果，最近5场）+ 调侃播报（仅状态转换时一次）
             if board.get('reason') == 'game_over':
@@ -1600,7 +1664,9 @@ class PetWindow(QWidget):
                 return
             if not board.get('active'):
                 self._watch_phase = ''
+                self._watch_timer.setInterval(30000)
                 return
+            self._watch_timer.setInterval(8000)
             in_combat = bool(board.get('theirs'))
             phase = 'combat' if in_combat else 'recruit'
             if phase == 'combat':
@@ -2033,6 +2099,8 @@ class PetWindow(QWidget):
             style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
             ctypes.windll.user32.SetWindowLongW(
                 hwnd, GWL_EXSTYLE, style | 0x00000080)
+            # The user must be able to record and screenshot the companion.
+            ctypes.windll.user32.SetWindowDisplayAffinity(hwnd,0)
         except Exception as e:
             pass
 

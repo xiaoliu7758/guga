@@ -18,8 +18,7 @@ def probe(audio_input=None, prompt=None, return_audio=False):
     started = time.monotonic()
     deadline = started + 45
     ws = websocket.create_connection(connection_url(cfg),
-                                     header=['Authorization: Bearer ' + cfg['api_key'].strip()],
-                                     timeout=12, http_no_proxy=['*'])
+                                     header=['Authorization: Bearer ' + cfg['api_key'].strip()], timeout=12)
     metrics = dict(provider=cfg['provider'], model=cfg['model'],
                    input_kind='audio' if audio_input else 'text',
                    session_configured=False, audio_bytes=0, completed=False)

@@ -18,6 +18,8 @@ class AppRuntime:
         self.dsh.tools_enabled=True
         self.dsh.archive.recover_once()
         self.dsh.event.connect(panel._dsh_event)
+        from core.screen_share import ScreenShareController
+        self.screen_share=ScreenShareController(panel)
         from core.music_performance import MusicPerformance
         self.music=MusicPerformance(panel)
         self.music.performance_event.connect(panel._music_event)
@@ -47,6 +49,58 @@ class AppRuntime:
         except (OSError,ValueError,TypeError):pass
 
     def execute(self, name, args):
+        if name=='screen_share':
+            action=args.get('action')
+            if action=='start':
+                if not self.panel.voice_active:
+                    raise RuntimeError('共享屏幕只在长语音对话中自动启用；当前没有长语音通话')
+                self.panel._screen_share_manual_stop=False
+                return self.screen_share.start(args.get('fps'),'call')
+            if action=='stop':
+                if self.panel.voice_active:self.panel._screen_share_manual_stop=True
+                return self.screen_share.stop()
+            if action=='status':return self.screen_share.status()
+            if action=='context':return self.screen_share.context(max(1,min(60,int(args.get('max_age',12)))))
+            if action=='assist':return self.screen_share.assist_context(max(1,min(60,int(args.get('max_age',12)))))
+            if action=='observation':return self.screen_share.observation(max(1,min(60,int(args.get('max_age',12)))))
+            if action=='snapshot':return self.screen_share.snapshot()
+            raise ValueError('未知共享屏幕操作')
+        if name=='voice_session':
+            action=args.get('action')
+            voice=self.panel.voice
+            if action=='status':
+                from core.realtime_voice import load_settings
+                cfg=load_settings()
+                return dict(active=bool(self.panel.voice_active and voice and voice.active),
+                    connected=bool(voice and voice.connected),
+                    reconnecting=bool(voice and voice.active and not voice.connected),
+                    starting=bool(self.panel.voice_active and voice and not voice.active),
+                    last_error=(voice.last_error if voice else ''),provider=cfg.get('provider'),
+                    model=cfg.get('model'),free_only=bool(cfg.get('free_only',True)),
+                    quota_confirmation_matches=(cfg.get('free_quota_confirmed_provider')==cfg.get('provider') and
+                        cfg.get('free_quota_confirmed_model')==cfg.get('model')),
+                    usage=dict(rounds=voice._usage_rounds,reported_total_tokens=voice._usage_total,
+                        unreported_rounds=voice._usage_missing) if voice else None)
+            if action=='start':
+                if self.panel.voice_active or self.panel.busy or self.panel.short_voice.active:
+                    raise RuntimeError('当前已有通话、任务或录音；未启动新语音会话')
+                if self.pet._realtime_active() or getattr(self.pet,'_recording',False):
+                    raise RuntimeError('另一种语音模式仍在使用麦克风；未启动新会话')
+                from core.realtime_voice import load_settings,connection_url
+                cfg=load_settings();connection_url(cfg)
+                if cfg.get('free_only',True) and (cfg.get('free_quota_confirmed_provider')!=cfg.get('provider') or
+                        cfg.get('free_quota_confirmed_model')!=cfg.get('model')):
+                    raise RuntimeError('当前免费额度保护未匹配所选模型；已阻止语音联网')
+                from PyQt5.QtCore import QTimer
+                QTimer.singleShot(0,lambda:self.pet._open_agent_voice())
+                return dict(accepted=True,started=False,message='已请求咕嘎打开实时通话；请查询status确认麦克风与连接状态')
+            if action=='stop':
+                if not self.panel.voice_active:
+                    return dict(stopped=False,active=False,message='当前没有活动的实时通话')
+                from PyQt5.QtCore import QTimer
+                QTimer.singleShot(0,lambda:self.pet._end_agent_voice())
+                return dict(stopped=True,active=True,message='已请求结束实时通话；请查询status确认会话已断开')
+            raise ValueError('未知实时语音操作')
         if name=='battleground' and args.get('action') in ('shadow','shadow_stop'):
             if args.get('action')=='shadow_stop':return self.shadow.stop()
             return self.shadow.start(args.get('seconds',900),bool(args.get('train',True)))
@@ -135,13 +189,43 @@ class AppRuntime:
                         current_conversation_id=self.panel.active_id,
                         voice_active=self.panel.voice_active,
                         voice_path=dict(owner_only=bool(self.panel.voice._cfg.get('owner_only',False)) if self.panel.voice else False,
-                            speaker_gate_active=bool(self.panel.voice and self.panel.voice._speaker_gate)),
+                            speaker_gate_active=bool(self.panel.voice and self.panel.voice._speaker_gate),
+                            interaction=self.panel.voice.interaction_status() if self.panel.voice else None),
                         workspace=self.store.snapshot(),
                         authorized_apps=list(self.apps.entries()),
                         battleground=self.battleground.status(),
                         dsh=self.dsh.status(),
+                        screen_share=dict(self.screen_share.status(),
+                            call_expected=bool(self.panel.voice_active and not self.panel._screen_share_manual_stop),
+                            watchdog_active=self.panel._screen_share_watchdog_timer.isActive(),
+                            start_error=getattr(self.panel,'_screen_share_start_error',''),
+                            voice_bridge=self.panel.voice.screen_bridge_status() if self.panel.voice else dict(attached=False),
+                            recovery_failures=getattr(self.panel,'_screen_share_recovery_failures',0)),
+                        performance=dict(avatar_idle_fps=round(1000/self.pet._anim2d._idle_interval_ms,1),
+                            avatar_active_fps=round(1000/self.pet._anim2d._active_interval_ms,1),
+                            avatar_interval_ms=self.pet._anim2d._timer.interval(),gaze_interval_ms=self.pet._gaze_timer.interval(),
+                            background_interval_ms=self.pet._bg_timer.interval(),battleground_interval_ms=self.pet._watch_timer.interval(),
+                            hidden_animation_paused=not self.pet.isVisible()),
                         media_workflow=self.media.status(),
                         personal_harness=dict(backend='auto:local-first',tickets=self.dsh.archive.recent(self.panel.active_agent_id,limit=5)),
+                        assistant_contract=dict(version=HARNESS_VERSION,routing='local_first_dsh_for_complex_engineering',
+                            browser_control=dict(mode='current_page_single_step',task_model=False,
+                                success_feedback='immediate_bubble',manual_quiet_seconds=60),
+                            conversation=dict(mode='awake' if self.panel.voice_active else 'companion',
+                                companion_interval_seconds=self.panel.proactive.interval_seconds,
+                                news_refresh_seconds=self.panel.proactive.news_refresh_seconds,
+                                task_progress_seconds=30,foreground_qa_independent=True,
+                                hold_to_talk_in_speech_bubble=True,speech_bubble_count=1,
+                                qa_search='public_snippets_with_sources',profile_memory='explicit_user_facts'),
+                            voice_control='local_mcp_start_status_stop_free_guard_v1',
+                            fast_action_running=bool(getattr(self.panel,'_fast_inflight',False) or getattr(self.panel,'_fast_launch_count',0)),
+                            failure_explanations='host_receipts_even_when_model_unavailable',
+                            close_page='one_selected_tab_then_verify',
+                            screen_share=dict(capture_fps=self.screen_share.fps,range=[2,5],max_visual_calls_per_minute=self.screen_share.max_calls_per_minute,
+                                storage='memory_only',visible_preview=False,start_policy='long_voice_call',
+                                visual_bridge='change_sampling_primary_chat_fallback',audio_model_direct_video=False),
+                            isolation=dict(desktop='host',tab_worker='separate_process_7s',
+                                           security_sandbox=False)),
                         music=self.music.status(),
                         stage=dict(sunglasses=self.pet._anim.sunglasses,dancing=self.pet._anim.dancing,
                                    pet_scale=getattr(self.pet,'_pet_scale',1.),
@@ -169,7 +253,7 @@ class AppRuntime:
                         active_agent=dict(id=self.panel.active_agent_id,profile=self.panel.active_profile),
                         local_access=self.apps.access.status(),
                         task=self.panel.agent.task_status(),
-                        capabilities=['pet_control', 'workspace', 'applications', 'self_ask', 'ecosystem','battleground','dsh_task','local_computer','computer','task_plan','media_workflow','workflow_catalog','wechat_send_self','wechat','browser','web_search','music_performance','learning_tutor','screen','study'],
+                        capabilities=['pet_control', 'workspace', 'applications', 'self_ask', 'ecosystem','battleground','dsh_task','local_computer','computer','screen_share','task_plan','media_workflow','workflow_catalog','wechat_send_self','wechat','browser','web_search','music_performance','learning_tutor','study','answer_export'],
                         scope='本机能力由完整访问开关控制；继承咕嘎进程实际Windows权限')
         if name == 'pet_control':
             return self._pet(args)
@@ -177,10 +261,10 @@ class AppRuntime:
             return self._workspace(args)
         if name == 'learning_tutor':
             return self._learning_tutor(args)
-        if name == 'screen':
-            return self._screen(args)
         if name == 'study':
             return self._study(args)
+        if name == 'answer_export':
+            return self._answer_export(args)
         raise ValueError('该工具未注册')
 
     def _pet(self, args):
@@ -322,7 +406,6 @@ class AppRuntime:
             return lt.due_reviews()
         if action == 'review':
             result = lt.review(args.get('concept', ''), args.get('rating', 'good'))
-            # 复习完成后，通知提醒器移除已提醒标记，允许该概念后续再次触发提醒
             reminder = getattr(self.pet, '_review_reminder', None)
             if reminder is not None and isinstance(result, dict):
                 reminder.on_reviewed([result.get('concept', '')])
@@ -374,26 +457,6 @@ class AppRuntime:
             return {'report': report}
         raise ValueError('未知学习操作')
 
-    def _screen(self, args):
-        import base64
-        import io
-        from PIL import ImageGrab
-        try:
-            img = ImageGrab.grab(all_screens=True)
-        except Exception as exc:
-            return {'ok': False, 'error': f'截图失败：{exc}'}
-        buf = io.BytesIO()
-        img.save(buf, 'PNG')
-        b64 = base64.b64encode(buf.getvalue()).decode('ascii')
-        result = {'ok': True, 'screenshot': True,
-                  'image': 'data:image/png;base64,' + b64}
-        if args.get('describe', 'true') != 'false':
-            from core import vision
-            result['description'] = vision._call_vision(
-                'data:image/png;base64,' + b64,
-                '用中文简短描述当前电脑屏幕/桌面上正在显示什么，有哪些窗口和内容。')
-        return result
-
     def _study(self, args):
         """截图 / 网址 / 本地文件 → 学习产物（思维导图/拓展/自测/复习卡）。"""
         import base64
@@ -401,11 +464,32 @@ class AppRuntime:
         from PIL import ImageGrab
         from core import study_tools as st
         action = args.get('action', 'package')
-        if action not in ('mindmap', 'expand', 'quiz', 'cards', 'package', 'from_url', 'from_file'):
+        if action not in ('mindmap', 'expand', 'quiz', 'cards', 'package', 'from_url', 'from_file', 'from_topic'):
             raise ValueError('未知学习操作')
         title = str(args.get('title', '')).strip() or None
-
-        # 外部资源路径：不截图，直接抓取网址/读文件
+        if action == 'from_topic':
+            topic = str(args.get('topic', '')).strip()
+            if not topic:
+                return {'ok': False, 'error': '请提供主题/知识点名称'}
+            detail = str(args.get('detail', 'auto')).strip() or 'auto'
+            res = st.topic_document(topic, detail=detail, title=title)
+            if not res.get('ok'):
+                return {'ok': False, 'error': res.get('error', '未能生成文档')}
+            # 只回传文件路径，正文留在落盘文件里，不塞回对话
+            files = []
+            if res.get('document'):
+                files.append(str(res.get('document')))
+            mm = res.get('mindmap')
+            if mm:
+                for k in ('html', 'outline'):
+                    if mm.get(k):
+                        files.append(str(mm.get(k)))
+            return {'ok': True, 'action': action,
+                    'title': res.get('title'),
+                    'document': res.get('document'),
+                    'mindmap': res.get('mindmap'),
+                    'files': files,
+                    'note': '文档与思维导图已作为独立文件保存，可直接打开。文件位置见 files 字段。'}
         if action == 'from_url':
             pkg = st.study_from_source(url=args.get('url', ''), title=title,
                                        want=('mindmap', 'cards'))
@@ -414,7 +498,6 @@ class AppRuntime:
             pkg = st.study_from_source(file_path=args.get('file', ''), title=title,
                                        want=('mindmap', 'cards'))
             return self._summarize_study(pkg, action)
-
         try:
             img = ImageGrab.grab(all_screens=True)
         except Exception as exc:
@@ -439,21 +522,71 @@ class AppRuntime:
     def _summarize_study(pkg, action):
         if not pkg.get('ok'):
             return {'ok': False, 'error': pkg.get('error', '未能生成学习内容')}
-        # 精简返回：给出产物路径与要点，供智能体复述；不把整张大图回传给上下文。
+        # 只回传文件路径与元信息，正文/大纲/题目全部留在落盘文件里，
+        # 不把内容塞回对话回答，确保产物是可直接打开的独立文件。
+        files = []
         summary = {}
         if 'mindmap' in pkg:
             mm = pkg['mindmap']
             summary['mindmap'] = {'title': mm.get('title'),
                                   'html': mm.get('html'), 'outline': mm.get('outline')}
+            for k in ('html', 'outline'):
+                if mm.get(k):
+                    files.append(str(mm.get(k)))
         if 'expand' in pkg:
             e = pkg['expand']
-            summary['expand'] = {'focus': e.get('focus', {}).get('name'),
+            summary['expand'] = {'focus': (e.get('focus') or {}).get('name'),
                                  'path': e.get('path')}
+            if e.get('path'):
+                files.append(str(e.get('path')))
         if 'quiz' in pkg:
-            summary['quiz'] = {'count': len(pkg['quiz']), 'questions': pkg['quiz']}
+            quiz_entry = pkg['quiz']
+            quiz_path = quiz_entry.get('path') if isinstance(quiz_entry, dict) else None
+            quiz_count = (quiz_entry.get('count') if isinstance(quiz_entry, dict)
+                          else len(quiz_entry) if isinstance(quiz_entry, list) else 0)
+            if not quiz_path and isinstance(quiz_entry, list):
+                # 兼容旧结构：题目仍是列表时，就地落盘
+                try:
+                    from core import study_tools as _st
+                    quiz_path = _st._save_quiz(quiz_entry)
+                except Exception:
+                    quiz_path = None
+            summary['quiz'] = {'count': quiz_count, 'path': quiz_path}
+            if quiz_path:
+                files.append(str(quiz_path))
         if 'cards' in pkg:
             summary['cards'] = {'count': len(pkg['cards'].get('cards', [])),
                                 'path': pkg['cards'].get('path'),
                                 'imported_srs': pkg['cards'].get('imported_srs', 0)}
-        return {'ok': True, 'action': action, 'summary': summary,
-                'note': '产物已保存到 runtime/study/ 目录，可用浏览器打开 html 思维导图。'}
+            if pkg['cards'].get('path'):
+                files.append(str(pkg['cards'].get('path')))
+        return {'ok': True, 'action': action, 'summary': summary, 'files': files,
+                'note': '学习产物已作为独立文件保存，可用浏览器/文本编辑器直接打开。文件位置见 files 字段。'}
+
+    def _answer_export(self, args):
+        """长回答智能处理：自动判断提炼/精炼 + 生成文档/思维导图。"""
+        from core import answer_pipeline as ap
+        action = args.get('action', 'process')
+        text = str(args.get('text', '')).strip()
+        title = str(args.get('title', '')).strip() or None
+        if not text:
+            return {'ok': False, 'error': '没有可处理的内容文本'}
+        if action == 'document':
+            art = ap.generate(text, title=title, want=('document',))
+            return {'ok': True, 'action': action, 'document': art.get('document'),
+                    'errors': art.get('errors', [])}
+        if action == 'mindmap':
+            art = ap.generate(text, title=title, want=('mindmap',))
+            return {'ok': True, 'action': action, 'mindmap': art.get('mindmap'),
+                    'errors': art.get('errors', [])}
+        if action == 'summarize':
+            return {'ok': True, 'action': action, 'summary': ap.summarize(text)}
+        if action == 'refine':
+            return {'ok': True, 'action': action, 'refined': ap.refine(text)}
+        # process：统一入口，自动判断
+        result = ap.process(text, title=title, want=('document', 'mindmap'))
+        return {'ok': True, 'action': action,
+                'decision': result['decision'],
+                'spoken': result['spoken'],
+                'artifacts': result['artifacts']}
+

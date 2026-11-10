@@ -12,15 +12,18 @@ fltmc >nul 2>&1 || (
 cd /d "%~dp0"
 rem Existing apps are left running; close an old pet through its tray if needed.
 
-rem ----- prefer the project-local virtualenv (deps installed there) -----
-set "PYTHON="
-if exist "%~dp0.venv\Scripts\python.exe" set "PYTHON=%~dp0.venv\Scripts\python.exe"
+rem ----- prefer project virtualenv (.venv) if present -----
+if exist "%~dp0.venv\Scripts\python.exe" (
+    set "PYTHON=%~dp0.venv\Scripts\python.exe"
+)
 
 rem ----- find python: python / py / full paths (must actually RUN, ignore Store alias) -----
+if not defined PYTHON (
 for %%C in (python py) do (
     if not defined PYTHON (
         where %%C >nul 2>&1 && %%C --version >nul 2>&1 && set "PYTHON=%%C"
     )
+)
 )
 if not defined PYTHON if exist "%LOCALAPPDATA%\Programs\Python\Python312\python.exe" set "PYTHON=%LOCALAPPDATA%\Programs\Python\Python312\python.exe"
 if not defined PYTHON if exist "%LOCALAPPDATA%\Programs\Python\Python310\python.exe" set "PYTHON=%LOCALAPPDATA%\Programs\Python\Python310\python.exe"

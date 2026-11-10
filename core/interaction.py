@@ -83,12 +83,12 @@ ACTIONS = {
         messages=['咕嘎～让本鹅看看你的烂摊子。', '截屏了，本鹅来当军师！'],
         animation='surprised', gesture='point',
     ),
-    # ---- Python/大模型助教动作 ----
+    # ---- 通用学习助教动作 ----
     'ask_tutor': Action(
         name='ask_tutor', label='请教助教', icon='📚',
         hunger_delta=0, happy_delta=5, energy_delta=-2,
         mood_result='😊',
-        messages=['咕嘎～想问什么？本鹅耐心讲解～', '饲养员尽管问，本鹅在呢～'],
+        messages=['咕嘎～想学什么？本鹅耐心讲解～', '饲养员尽管问，本鹅在呢～'],
         animation='happy', gesture='point',
     ),
     'quiz_user': Action(

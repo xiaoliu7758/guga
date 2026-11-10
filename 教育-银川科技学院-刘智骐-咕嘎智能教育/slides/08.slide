@@ -1,0 +1,55 @@
+<Slide>
+  <Box style={{ width: '100%', height: '100%', background: '#F8FAFC', padding: '60px 60px 60px 60px', flexDirection: 'column' }}>
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Text style={{ fontSize: 16, color: '#2563EB', fontWeight: 'bold' }}>03</Text>
+      <Text style={{ fontSize: 32, color: '#0B1E3F', fontWeight: 'bold' }}>问题理解：学习者行为洞察</Text>
+    </Box>
+    <Box style={{ width: '100%', height: 1, background: '#E2E8F0', marginTop: 14, marginBottom: 24 }} />
+
+    <Box style={{ flexDirection: 'row', gap: 24, flex: 1 }}>
+      <Box style={{ flex: 1.15, flexDirection: 'column' }}>
+        <Chart
+          style={{ height: 320 }}
+          chartType='lineChart'
+          title='不同学习风格用户的互动行为趋势'
+          titleColor='#1E293B'
+          showLegend={true}
+          showDataLabels={false}
+          legendColor='#64748B'
+          axisColor='#94A3B8'
+          colors={['#2563EB', '#F59E0B', '#10B981']}
+          background='#FFFFFF'
+          data={[
+            ['阶段', '快进型', '稳扎型', '畏难型'],
+            ['起步', 30, 20, 40],
+            ['理解', 55, 40, 25],
+            ['练习', 80, 60, 30],
+            ['巩固', 70, 85, 45],
+          ]}
+        />
+        <Text style={{ fontSize: 15, color: '#64748B', lineHeight: 1.5, marginTop: 10 }}>
+          数据洞察：快进型用户在练习期活跃度见顶后回落，稳扎型呈持续上升，畏难型整体偏低——说明<span style={{ fontWeight: 'bold', color: '#2563EB' }}>单一教学节奏无法同时满足三类学习者</span>。
+        </Text>
+      </Box>
+
+      <Box style={{ flex: 1, flexDirection: 'column', gap: 14 }}>
+        <Text style={{ fontSize: 20, color: '#1E293B', fontWeight: 'bold' }}>对 Agent 设计的指导意义</Text>
+        {[
+          ['动态节奏', '快进型减少铺垫、直给结论；稳扎型保持递进；畏难型加强引导与鼓励'],
+          ['难度自适应', '依据实时答对率升降题目难度，让练习匹配个体最近发展区'],
+          ['风格注入', '把画像结论注入讲解风格，让同一知识点用不同口吻适配不同人'],
+        ].map((item, idx) => (
+          <Box key={idx} style={{ background: '#FFFFFF', borderRadius: 12, border: '1px solid #E8EDF5', padding: '16px 18px', flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+            <Box style={{ width: 34, height: 34, borderRadius: 9, background: '#EFF6FF', justifyContent: 'center', alignItems: 'center' }}>
+              <FAIcon name={['tachometer-alt', 'sliders-h', 'paint-brush'][idx]} style={{ fill: '#2563EB', width: 18, height: 18 }} />
+            </Box>
+            <Box style={{ flexDirection: 'column', flex: 1 }}>
+              <Text style={{ fontSize: 18, color: '#1E293B', fontWeight: 'bold' }}>{item[0]}</Text>
+              <Text style={{ fontSize: 15, color: '#64748B', lineHeight: 1.5, marginTop: 3 }}>{item[1]}</Text>
+            </Box>
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  </Box>
+</Slide>

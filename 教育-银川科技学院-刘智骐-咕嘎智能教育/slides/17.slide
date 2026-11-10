@@ -1,0 +1,38 @@
+<Slide>
+  <Box style={{ width: '100%', height: '100%', background: '#F8FAFC', padding: '60px 60px 60px 60px', flexDirection: 'column' }}>
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Text style={{ fontSize: 16, color: '#2563EB', fontWeight: 'bold' }}>06</Text>
+      <Text style={{ fontSize: 32, color: '#0B1E3F', fontWeight: 'bold' }}>提示词示例与链接</Text>
+    </Box>
+    <Box style={{ width: '100%', height: 1, background: '#E2E8F0', marginTop: 14, marginBottom: 28 }} />
+
+    <Box style={{ flexDirection: 'column', gap: 12, flex: 1 }}>
+      {[
+        ['帮我弄懂递归', '触发五阶段讲解 + 思维导图 + 自适应出题'],
+        ['给我讲讲傅里叶变换并生成文档', '主题成文，产出结构化文档 + 思维导图'],
+        ['把这段内容整理成复习卡', '提炼知识点，生成 FSRS 间隔重复复习卡'],
+        ['给我出几道线性代数的题', '依据画像与掌握度，自适应生成练习'],
+      ].map((item, idx) => (
+        <Box key={idx} style={{ background: '#FFFFFF', borderRadius: 12, border: '1px solid #E8EDF5', padding: '12px 18px', flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+          <Box style={{ width: 38, height: 38, borderRadius: 10, background: '#EFF6FF', justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={{ fontSize: 18, color: '#2563EB', fontWeight: 'bold' }}>{idx + 1}</Text>
+          </Box>
+          <Box style={{ flex: 1, background: '#F8FAFC', borderRadius: 10, padding: '10px 14px', flexDirection: 'column', gap: 2 }}>
+            <Text style={{ fontSize: 17, color: '#1E293B', fontWeight: 'bold' }}>"{item[0]}"</Text>
+            <Text style={{ fontSize: 14, color: '#64748B' }}>输出：{item[1]}</Text>
+          </Box>
+        </Box>
+      ))}
+    </Box>
+
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 16, background: '#EFF6FF', borderRadius: 12, padding: '14px 20px' }}>
+      <Box style={{ width: 44, height: 44, borderRadius: 12, background: '#2563EB', justifyContent: 'center', alignItems: 'center' }}>
+        <FAIcon name='link' style={{ fill: '#FFFFFF', width: 22, height: 22 }} />
+      </Box>
+      <Box style={{ flexDirection: 'column', flex: 1 }}>
+        <Text style={{ fontSize: 18, color: '#1E293B', fontWeight: 'bold' }}>Agent 智能体链接</Text>
+        <Text href="https://github.com/jscjscjscjscjsc/heimao-zhuochong" style={{ fontSize: 16, color: '#2563EB', textDecoration: 'underline' }}>github.com/jscjscjscjscjsc/heimao-zhuochong</Text>
+      </Box>
+    </Box>
+  </Box>
+</Slide>

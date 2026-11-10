@@ -1,0 +1,58 @@
+<Slide>
+  <Box style={{ width: '100%', height: '100%', background: '#F8FAFC', padding: '60px 60px 60px 60px', flexDirection: 'column' }}>
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Text style={{ fontSize: 16, color: '#2563EB', fontWeight: 'bold' }}>03</Text>
+      <Text style={{ fontSize: 32, color: '#0B1E3F', fontWeight: 'bold' }}>分析流程 · 思维导图</Text>
+    </Box>
+    <Box style={{ width: '100%', height: 1, background: '#E2E8F0', marginTop: 14, marginBottom: 24 }} />
+
+    <Box style={{ flex: 1, background: '#FFFFFF', borderRadius: 12, border: '1px solid #E8EDF5', padding: '20px 24px', justifyContent: 'center', alignItems: 'center' }}>
+      <svg width={1100} height={420} viewBox='0 0 1100 420'>
+        {/* 中心节点 */}
+        <rect x={430} y={170} width={240} height={80} rx={14} fill='#2563EB' />
+        <text x={550} y={205} textAnchor='middle' fill='#FFFFFF' fontSize='22' fontWeight='bold'>咕嘎分析引擎</text>
+        <text x={550} y={230} textAnchor='middle' fill='#FFFFFF' fontSize='14' opacity='0.9'>数据 → 洞察 → 教学</text>
+
+        {/* 左侧分支 */}
+        <g>
+          <rect x={30} y={60} width={230} height={70} rx={10} fill='#EFF6FF' stroke='#2563EB' strokeWidth='1.5' />
+          <text x={145} y={90} textAnchor='middle' fill='#1E293B' fontSize='18' fontWeight='bold'>数据输入</text>
+          <text x={145} y={112} textAnchor='middle' fill='#64748B' fontSize='13'>截图 · 文档 · 网页</text>
+          <line x1={260} y1={95} x2={430} y2={195} stroke='#94A3B8' strokeWidth='1.5' />
+        </g>
+        <g>
+          <rect x={30} y={180} width={230} height={70} rx={10} fill='#EFF6FF' stroke='#2563EB' strokeWidth='1.5' />
+          <text x={145} y={210} textAnchor='middle' fill='#1E293B' fontSize='18' fontWeight='bold'>知识提取</text>
+          <text x={145} y={232} textAnchor='middle' fill='#64748B' fontSize='13'>多模态语义理解</text>
+          <line x1={260} y1={215} x2={430} y2={215} stroke='#94A3B8' strokeWidth='1.5' />
+        </g>
+        <g>
+          <rect x={30} y={300} width={230} height={70} rx={10} fill='#EFF6FF' stroke='#2563EB' strokeWidth='1.5' />
+          <text x={145} y={330} textAnchor='middle' fill='#1E293B' fontSize='18' fontWeight='bold'>画像识别</text>
+          <text x={145} y={352} textAnchor='middle' fill='#64748B' fontSize='13'>学习风格 · 掌握度</text>
+          <line x1={260} y1={335} x2={430} y2={225} stroke='#94A3B8' strokeWidth='1.5' />
+        </g>
+
+        {/* 右侧分支 */}
+        <g>
+          <rect x={840} y={60} width={230} height={70} rx={10} fill='#FEF3C7' stroke='#F59E0B' strokeWidth='1.5' />
+          <text x={955} y={90} textAnchor='middle' fill='#1E293B' fontSize='18' fontWeight='bold'>结构化讲解</text>
+          <text x={955} y={112} textAnchor='middle' fill='#64748B' fontSize='13'>五阶段递进</text>
+          <line x1={670} y1={195} x2={840} y2={95} stroke='#94A3B8' strokeWidth='1.5' />
+        </g>
+        <g>
+          <rect x={840} y={180} width={230} height={70} rx={10} fill='#FEF3C7' stroke='#F59E0B' strokeWidth='1.5' />
+          <text x={955} y={210} textAnchor='middle' fill='#1E293B' fontSize='18' fontWeight='bold'>自适应出题</text>
+          <text x={955} y={232} textAnchor='middle' fill='#64748B' fontSize='13'>难度动态调节</text>
+          <line x1={670} y1={215} x2={840} y2={215} stroke='#94A3B8' strokeWidth='1.5' />
+        </g>
+        <g>
+          <rect x={840} y={300} width={230} height={70} rx={10} fill='#FEF3C7' stroke='#F59E0B' strokeWidth='1.5' />
+          <text x={955} y={330} textAnchor='middle' fill='#1E293B' fontSize='18' fontWeight='bold'>间隔复习</text>
+          <text x={955} y={352} textAnchor='middle' fill='#64748B' fontSize='13'>FSRS 记忆调度</text>
+          <line x1={670} y1={225} x2={840} y2={335} stroke='#94A3B8' strokeWidth='1.5' />
+        </g>
+      </svg>
+    </Box>
+  </Box>
+</Slide>

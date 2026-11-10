@@ -1,0 +1,37 @@
+<Slide>
+  <Box style={{ width: '100%', height: '100%', background: '#F8FAFC', padding: '60px 60px 60px 60px', flexDirection: 'column' }}>
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Text style={{ fontSize: 16, color: '#2563EB', fontWeight: 'bold' }}>02</Text>
+      <Text style={{ fontSize: 32, color: '#0B1E3F', fontWeight: 'bold' }}>数据来源</Text>
+    </Box>
+    <Box style={{ width: '100%', height: 1, background: '#E2E8F0', marginTop: 14, marginBottom: 28 }} />
+
+    <Box style={{ flexDirection: 'row', gap: 24, flex: 1 }}>
+      {[
+        ['行业权威数据库', 'database', '#2563EB', ['国家统计局 · 教育公开数据', '教育部教育信息化统计公报', '权威性：官方一手数据，口径统一', '时效性：年度更新，覆盖长期趋势']],
+        ['专业资讯平台', 'newspaper', '#0EA5E9', ['教育科技行业报告与白皮书', 'AI + 教育前沿案例库', '权威性：行业智库与头部机构发布', '时效性：季度/月度更新，紧跟热点']],
+        ['开源学习数据集', 'code', '#F59E0B', ['公开题库、知识图谱语料', '学习者行为与互动数据', '权威性：社区共建、可交叉验证', '时效性：持续扩充，覆盖多学科']],
+      ].map((item, idx) => (
+        <Box key={idx} style={{ flex: 1, background: '#FFFFFF', borderRadius: 12, border: '1px solid #E8EDF5', padding: '22px 22px', flexDirection: 'column' }}>
+          <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+            <Box style={{ width: 44, height: 44, borderRadius: 10, background: item[2] + '1A', justifyContent: 'center', alignItems: 'center' }}>
+              <FAIcon name={item[1]} style={{ fill: item[2], width: 24, height: 24 }} />
+            </Box>
+            <Text style={{ fontSize: 21, color: '#1E293B', fontWeight: 'bold' }}>{item[0]}</Text>
+          </Box>
+          {item[3].map((line, i) => (
+            <Box key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 10 }}>
+              <Box style={{ width: 6, height: 6, borderRadius: 3, background: item[2], marginTop: 8 }} />
+              <Text style={{ fontSize: 16, color: '#475569', lineHeight: 1.5, flex: 1 }}>{line}</Text>
+            </Box>
+          ))}
+        </Box>
+      ))}
+    </Box>
+
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 20, background: '#EFF6FF', borderRadius: 10, padding: '14px 18px' }}>
+      <FAIcon name='check-circle' style={{ fill: '#2563EB', width: 22, height: 22 }} />
+      <Text style={{ fontSize: 17, color: '#1E3A8A', fontWeight: 'bold' }}>三源交叉验证：官方数据保证权威、行业平台保证时效、开源数据集保证覆盖，共同支撑知识库的完整性与可信度。</Text>
+    </Box>
+  </Box>
+</Slide>

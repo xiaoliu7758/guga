@@ -1,0 +1,45 @@
+<Slide>
+  <Box style={{ width: '100%', height: '100%', background: '#F8FAFC', padding: '60px 60px 60px 60px', flexDirection: 'column' }}>
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Text style={{ fontSize: 16, color: '#2563EB', fontWeight: 'bold' }}>04</Text>
+      <Text style={{ fontSize: 32, color: '#0B1E3F', fontWeight: 'bold' }}>创新点展示</Text>
+    </Box>
+    <Box style={{ width: '100%', height: 1, background: '#E2E8F0', marginTop: 14, marginBottom: 28 }} />
+
+    <Box style={{ flexDirection: 'row', gap: 28, flex: 1 }}>
+      <Box style={{ flex: 1, background: '#FFFFFF', borderRadius: 14, border: '2px solid #2563EB', padding: '26px 26px', flexDirection: 'column', gap: 16 }}>
+        <Box style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <FAIcon name='star' style={{ fill: '#F59E0B', width: 28, height: 28 }} />
+            <Text style={{ fontSize: 24, color: '#1E293B', fontWeight: 'bold' }}>创新点一</Text>
+          </Box>
+          <Text style={{ fontSize: 14, color: '#2563EB', fontWeight: 'bold' }}>核心创新</Text>
+        </Box>
+        <Text style={{ fontSize: 22, color: '#2563EB', fontWeight: 'bold', lineHeight: 1.4 }}>「学什么，教什么」的跨学科自适应学习引擎</Text>
+        <Text style={{ fontSize: 17, color: '#334155', lineHeight: 1.7 }}>
+          突破传统 AI 教育工具「限定单一学科」的局限，通过<span style={{ fontWeight: 'bold', color: '#2563EB' }}>截图理解 + 知识提取 + 动态画像</span>，让同一只桌宠能够理解学习者抛出的任意主题，并自动生成配套讲解、思维导图、练习与复习计划。
+        </Text>
+        <Box style={{ background: '#EFF6FF', borderRadius: 10, padding: '14px 16px' }}>
+          <Text style={{ fontSize: 16, color: '#1E3A8A', lineHeight: 1.6, fontWeight: 'bold' }}>优势：学习者无需切换工具，一个入口覆盖全学科学习闭环。</Text>
+        </Box>
+      </Box>
+
+      <Box style={{ flex: 1, background: '#FFFFFF', borderRadius: 14, border: '2px solid #0EA5E9', padding: '26px 26px', flexDirection: 'column', gap: 16 }}>
+        <Box style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <FAIcon name='star' style={{ fill: '#0EA5E9', width: 28, height: 28 }} />
+            <Text style={{ fontSize: 24, color: '#1E293B', fontWeight: 'bold' }}>创新点二</Text>
+          </Box>
+          <Text style={{ fontSize: 14, color: '#0EA5E9', fontWeight: 'bold' }}>体验创新</Text>
+        </Box>
+        <Text style={{ fontSize: 22, color: '#0EA5E9', fontWeight: 'bold', lineHeight: 1.4 }}>具身化桌宠的「陪伴式」学习体验</Text>
+        <Text style={{ fontSize: 17, color: '#334155', lineHeight: 1.7 }}>
+          将 AI 学习能力融入一只<span style={{ fontWeight: 'bold', color: '#0EA5E9' }}>有情绪、会主动搭话</span>的桌宠，让学习从「冰冷的工具交互」变为「有温度的陪伴」。它会在学习者分心时提醒、在答对时鼓励、在畏难时降低难度。
+        </Text>
+        <Box style={{ background: '#F0F9FF', borderRadius: 10, padding: '14px 16px' }}>
+          <Text style={{ fontSize: 16, color: '#0C4A6E', lineHeight: 1.6, fontWeight: 'bold' }}>优势：情感化交互显著降低学习门槛，提升学习粘性与坚持度。</Text>
+        </Box>
+      </Box>
+    </Box>
+  </Box>
+</Slide>

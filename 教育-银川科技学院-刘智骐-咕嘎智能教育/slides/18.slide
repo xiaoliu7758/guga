@@ -1,0 +1,19 @@
+<Slide>
+  <Box style={{ width: '100%', height: '100%', position: 'relative', background: 'linear-gradient(135deg, #0B1E3F 0%, #14346B 45%, #2563EB 100%)', padding: '60px 60px 60px 60px' }}>
+    <svg width={320} height={320} viewBox='0 0 320 320' style={{ position: 'absolute', right: 0, top: 0, opacity: 0.10 }}>
+      <circle cx='160' cy='160' r='140' fill='none' stroke='#FFFFFF' strokeWidth='2' />
+      <circle cx='160' cy='160' r='100' fill='none' stroke='#FFFFFF' strokeWidth='2' />
+      <circle cx='160' cy='160' r='60' fill='#FFFFFF' />
+    </svg>
+
+    <Box style={{ position: 'relative', zIndex: 1, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+      <Box style={{ width: 60, height: 60, borderRadius: 16, background: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center', marginBottom: 28 }}>
+        <FAIcon name='graduation-cap' style={{ fill: '#7DD3FC', width: 34, height: 34 }} />
+      </Box>
+      <Text style={{ fontSize: 48, color: '#FFFFFF', fontWeight: 'bold', letterSpacing: 2 }}>感谢观看</Text>
+      <Text style={{ fontSize: 22, color: '#BFDBFE', marginTop: 18, lineHeight: 1.5 }}>咕嘎智能教育 · 让 AI 真正「学什么教什么」</Text>
+      <Box style={{ width: 200, height: 1, background: 'rgba(255,255,255,0.35)', marginTop: 36, marginBottom: 28 }} />
+      <Text style={{ fontSize: 17, color: '#E0E7FF' }}>银川科技学院 · 队长 刘智骐</Text>
+    </Box>
+  </Box>
+</Slide>

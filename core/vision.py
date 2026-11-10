@@ -4,8 +4,7 @@
 - screenshot(): 截取主屏幕 → base64 → 调用智谱视觉 API
 - analyze_board(): 带结构化提示词分析酒馆战棋棋盘
 - analyze_image_path(): 分析指定图片文件
-配置：ai_config.json 的 vision_api_key / vision_base_url / vision_model
-      （默认智谱 glm-4.6v-flash；也可指向任意 OpenAI 兼容视觉接口，如 dashscope 的 qwen3-vl-plus）
+配置：ai_config.json 的 zhipu_api_key / vision_model（默认 glm-4.6v-flash 免费版）
 """
 import base64
 import io
@@ -47,18 +46,16 @@ def _load_cfg():
 
 def _call_vision(image_b64: str, prompt: str) -> str:
     cfg = _load_cfg()
-    api_key = (cfg.get('vision_api_key') or cfg.get('zhipu_api_key') or '').strip()
-    if not api_key or api_key.startswith('YOUR_'):
-        return '❌ 未配置 vision_api_key / zhipu_api_key（ai_config.json）'
+    api_key = cfg.get('zhipu_api_key', '')
+    if not api_key:
+        return '❌ 未配置 zhipu_api_key（ai_config.json）'
     model = cfg.get('vision_model', 'glm-4.6v-flash')
-    # 视觉接口地址可配：默认智谱；换成任何 OpenAI 兼容视觉服务（如 dashscope qwen3-vl-plus）
-    base_url = (cfg.get('vision_base_url') or 'https://open.bigmodel.cn/api/paas/v4').rstrip('/')
     # 429 限流退避重试（免费版并发限制）
     last_err = ''
     for attempt in range(4):
         try:
             resp = requests.post(
-                base_url + '/chat/completions',
+                'https://open.bigmodel.cn/api/paas/v4/chat/completions',
                 headers={
                     'Content-Type': 'application/json',
                     'Authorization': f'Bearer {api_key}',
@@ -165,7 +162,7 @@ def analyze_board_image(path: str, prompt: str = None) -> str:
 
 
 def analyze_screen_tutor(prompt: str = None) -> str:
-    # 助教模式: 截屏并分析屏幕上的 Python/大模型相关内容。
+    # 助教模式: 截屏并分析屏幕上饲养员正在学习的相关内容。
     # 复用 _call_vision + screenshot_to_b64, 不影响战棋 analyze_board_* 函数。
     from core.tutor import SCREEN_TUTOR_PROMPT
     try:

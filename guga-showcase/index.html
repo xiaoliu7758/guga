@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>咕嘎智能教育 · 会「学什么教什么」的 AI 桌宠</title>
+<style>
+  :root {
+    --blue: #2563EB;
+    --cyan: #0EA5E9;
+    --amber: #F59E0B;
+    --ink: #0B1E3F;
+    --body: #334155;
+    --muted: #64748B;
+    --bg: #F8FAFC;
+    --card: #FFFFFF;
+    --line: #E2E8F0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", -apple-system, sans-serif;
+    color: var(--body);
+    background: var(--bg);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  /* ===== 顶部导航 ===== */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(255,255,255,0.85); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  nav .container {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--ink); font-size: 18px; }
+  .logo .dot { width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(135deg, var(--blue), var(--cyan)); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; }
+  nav .links { display: flex; gap: 26px; font-size: 15px; }
+  nav .links a { color: var(--muted); font-weight: 500; }
+  nav .links a:hover { color: var(--blue); text-decoration: none; }
+  .nav-btn { background: var(--blue); color: #fff !important; padding: 8px 18px; border-radius: 20px; }
+  .nav-btn:hover { background: #1d4ed8; text-decoration: none !important; }
+
+  /* ===== Hero ===== */
+  .hero {
+    background: linear-gradient(135deg, #0B1E3F 0%, #14346B 45%, #2563EB 100%);
+    color: #fff; overflow: hidden; position: relative;
+  }
+  .hero .container { display: flex; align-items: center; gap: 40px; padding-top: 72px; padding-bottom: 72px; position: relative; z-index: 2; }
+  .hero-text { flex: 1; }
+  .badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 20px; font-size: 13px; color: #BFDBFE; margin-bottom: 22px; }
+  .hero h1 { font-size: 46px; line-height: 1.2; letter-spacing: 1px; margin-bottom: 18px; }
+  .hero h1 .accent { color: #7DD3FC; }
+  .hero .subtitle { font-size: 19px; color: #BFDBFE; max-width: 520px; margin-bottom: 30px; }
+  .hero .cta { display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 26px; font-size: 15px; font-weight: 600; transition: all .2s; }
+  .btn-primary { background: #fff; color: var(--ink); }
+  .btn-primary:hover { background: #e0e7ff; text-decoration: none; transform: translateY(-1px); }
+  .btn-ghost { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.4); }
+  .btn-ghost:hover { background: rgba(255,255,255,0.1); text-decoration: none; }
+  .hero-visual { flex: 0 0 300px; display: flex; justify-content: center; align-items: center; }
+  .hero-visual img { width: 260px; border-radius: 24px; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.35)); animation: float 3.5s ease-in-out infinite; }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+
+  /* ===== 通用 section ===== */
+  section { padding: 72px 0; }
+  .section-head { text-align: center; margin-bottom: 48px; }
+  .section-head .kicker { font-size: 14px; color: var(--blue); font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+  .section-head h2 { font-size: 34px; color: var(--ink); letter-spacing: 0.5px; }
+  .section-head p { color: var(--muted); margin-top: 10px; font-size: 16px; }
+
+  /* ===== 特性卡片 ===== */
+  .grid { display: grid; gap: 22px; }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    padding: 26px; transition: all .25s;
+  }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(15,23,42,0.08); border-color: #c7d2fe; }
+  .card .icon {
+    width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    font-size: 24px; margin-bottom: 16px;
+  }
+  .card h3 { font-size: 20px; color: var(--ink); margin-bottom: 8px; }
+  .card p { font-size: 15px; color: var(--muted); }
+
+  /* ===== 学习闭环流程 ===== */
+  .flow { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+  .flow-step {
+    flex: 1; min-width: 140px; background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 22px 18px; text-align: center; position: relative;
+  }
+  .flow-step .num { width: 34px; height: 34px; border-radius: 50%; background: var(--blue); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; margin: 0 auto 10px; }
+  .flow-step h4 { font-size: 17px; color: var(--ink); margin-bottom: 4px; }
+  .flow-step p { font-size: 13px; color: var(--muted); }
+
+  /* ===== 跨学科 ===== */
+  .cross { display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap; }
+  .cross .pill {
+    background: var(--card); border: 1px solid var(--line); border-radius: 40px;
+    padding: 18px 28px; font-size: 18px; font-weight: 700; color: var(--ink);
+  }
+  .cross .plus { font-size: 26px; color: var(--amber); font-weight: 700; }
+
+  /* ===== 下载/链接区 ===== */
+  .cta-panel {
+    background: linear-gradient(135deg, #0B1E3F 0%, #2563EB 100%);
+    border-radius: 20px; padding: 52px 40px; color: #fff; text-align: center;
+  }
+  .cta-panel h2 { font-size: 30px; margin-bottom: 12px; }
+  .cta-panel p { color: #BFDBFE; margin-bottom: 28px; }
+  .cta-panel .btn { background: #fff; color: var(--ink); }
+
+  /* ===== 页脚 ===== */
+  footer { border-top: 1px solid var(--line); padding: 40px 0; text-align: center; color: var(--muted); font-size: 14px; }
+  footer .school { font-weight: 600; color: var(--ink); }
+
+  @media (max-width: 860px) {
+    .hero .container { flex-direction: column; text-align: center; padding-top: 48px; padding-bottom: 48px; }
+    .hero .subtitle { margin-left: auto; margin-right: auto; }
+    .hero .cta { justify-content: center; }
+    .grid-3, .grid-2 { grid-template-columns: 1fr; }
+    nav .links { display: none; }
+    .hero h1 { font-size: 34px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="container">
+    <div class="logo"><span class="dot">🐧</span> 咕嘎智能教育</div>
+    <div class="links">
+      <a href="#intro">作品介绍</a>
+      <a href="#features">核心能力</a>
+      <a href="#learn">学习闭环</a>
+      <a href="#innovation">创新点</a>
+      <a href="#download">获取方式</a>
+    </div>
+    <a class="nav-btn" href="#download">立即体验</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <div class="hero-text">
+      <div class="badge">✦ 教育命题领域 · AI Agent 作品</div>
+      <h1>会「<span class="accent">学什么，教什么</span>」的<br>AI 桌宠学习伙伴</h1>
+      <p class="subtitle">咕嘎是一只常驻桌面的企鹅桌宠，能理解你抛出的任意主题，自动生成讲解、思维导图、练习题与复习计划，让 AI 从「被动问答」走向「主动陪你学」。</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="#download">查看项目与下载</a>
+        <a class="btn btn-ghost" href="#features">了解核心能力</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <img src="assets/happy_transparent.png" alt="咕嘎企鹅吉祥物">
+    </div>
+  </div>
+</header>
+
+<section id="intro">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker">About</div>
+      <h2>作品背景与说明</h2>
+      <p>银川科技学院 · 队长 刘智骐 · 咕嘎智能教育</p>
+    </div>
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="icon" style="background:#EFF6FF;">💡</div>
+        <h3>作品缘起</h3>
+        <p>传统学习工具「千人一面」，难以感知学习者的真实困惑与掌握程度。咕嘎通过截图理解、知识提取、动态画像，让 AI 从「被动问答」走向「主动理解学习者、动态适配教学」。</p>
+      </div>
+      <div class="card">
+        <div class="icon" style="background:#FEF3C7;">📚</div>
+        <h3>核心命题</h3>
+        <p>不局限于单一学科，而是「学什么、教什么」——覆盖从知识点讲解到练习巩固的完整学习闭环，让同一只桌宠适配任意学科的学习需求。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features" style="background:#fff;">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker">Features</div>
+      <h2>核心能力</h2>
+      <p>自然语言触发，无需记命令或数字键</p>
+    </div>
+    <div class="grid grid-3">
+      <div class="card">
+        <div class="icon" style="background:#EFF6FF;">🧠</div>
+        <h3>截图即学</h3>
+        <p>对屏幕截图自动提炼知识点，生成思维导图、拓展讲解，让「看到的内容」变成「学会的内容」。</p>
+      </div>
+      <div class="card">
+        <div class="icon" style="background:#F0F9FF;">📝</div>
+        <h3>自适应出题</h3>
+        <p>依据你的答对率动态升降难度，让练习始终处在最适合你的「最近发展区」。</p>
+      </div>
+      <div class="card">
+        <div class="icon" style="background:#FEF3C7;">⏰</div>
+        <h3>间隔重复复习</h3>
+        <p>基于 FSRS 记忆曲线调度复习时机，让知识从「学过」真正变成「记住」。</p>
+      </div>
+      <div class="card">
+        <div class="icon" style="background:#ECFDF5;">🗺️</div>
+        <h3>思维导图生成</h3>
+        <p>一键生成层级分明的交互式思维导图，主干、分支、关键细节一目了然。</p>
+      </div>
+      <div class="card">
+        <div class="icon" style="background:#F5F3FF;">🎯</div>
+        <h3>个性化画像</h3>
+        <p>识别快进型、稳扎型、畏难型等学习风格，动态适配讲解节奏与口吻。</p>
+      </div>
+      <div class="card">
+        <div class="icon" style="background:#FFF7ED;">🎤</div>
+        <h3>语音朗读陪伴</h3>
+        <p>长回答自动分段朗读，可随时打断；有情绪、会主动搭话，像真人一样陪你学习。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="learn">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker">Learning Loop</div>
+      <h2>完整学习闭环</h2>
+      <p>从「想学」到「学会」的五步递进</p>
+    </div>
+    <div class="flow">
+      <div class="flow-step"><div class="num">1</div><h4>目标</h4><p>自然语言说出想学什么</p></div>
+      <div class="flow-step"><div class="num">2</div><h4>理解</h4><p>截图/文本提炼知识点</p></div>
+      <div class="flow-step"><div class="num">3</div><h4>前提</h4><p>识别画像与前置知识</p></div>
+      <div class="flow-step"><div class="num">4</div><h4>教学</h4><p>结构化讲解 + 思维导图</p></div>
+      <div class="flow-step"><div class="num">5</div><h4>练习</h4><p>自适应出题 + 间隔复习</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="innovation" style="background:#fff;">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker">Innovation</div>
+      <h2>创新点与独特视角</h2>
+      <p>认知科学 × 人工智能 × 情感计算的跨学科融合</p>
+    </div>
+    <div class="grid grid-2" style="margin-bottom: 36px;">
+      <div class="card" style="border: 2px solid #2563EB;">
+        <div class="icon" style="background:#EFF6FF;">⭐</div>
+        <h3>「学什么，教什么」跨学科引擎</h3>
+        <p>突破传统 AI 工具限定单一学科的局限，通过截图理解 + 知识提取 + 动态画像，让同一只桌宠适配任意主题，自动生成配套讲解与练习。</p>
+      </div>
+      <div class="card" style="border: 2px solid #0EA5E9;">
+        <div class="icon" style="background:#F0F9FF;">💙</div>
+        <h3>具身化「陪伴式」学习体验</h3>
+        <p>将 AI 学习能力融入有情绪、会主动搭话的桌宠，让学习从「冰冷工具」变为「有温度的陪伴」，显著降低学习门槛、提升坚持度。</p>
+      </div>
+    </div>
+    <div class="cross">
+      <div class="pill">🧠 认知科学</div>
+      <div class="plus">+</div>
+      <div class="pill">🤖 人工智能</div>
+      <div class="plus">+</div>
+      <div class="pill">💗 情感计算</div>
+    </div>
+  </div>
+</section>
+
+<section id="download">
+  <div class="container">
+    <div class="cta-panel">
+      <h2>获取咕嘎智能教育</h2>
+      <p>完整源码、使用说明与作品 PPT 均可获取；欢迎 Star 与体验</p>
+      <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap;">
+        <a class="btn btn-primary" href="https://github.com/jscjscjscjscjsc/heimao-zhuochong" target="_blank">GitHub 仓库</a>
+        <a class="btn btn-ghost" href="assets/教育-银川科技学院-刘智骐-咕嘎智能教育.pptx" download>下载作品 PPT</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p class="school">银川科技学院 · 队长 刘智骐 · 咕嘎智能教育</p>
+    <p style="margin-top:6px;">教育命题领域 · AI Agent 作品展示</p>
+  </div>
+</footer>
+
+</body>
+</html>

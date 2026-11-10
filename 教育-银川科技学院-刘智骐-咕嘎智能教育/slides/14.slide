@@ -1,0 +1,37 @@
+<Slide>
+  <Box style={{ width: '100%', height: '100%', background: '#F8FAFC', padding: '60px 60px 60px 60px', flexDirection: 'column' }}>
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Text style={{ fontSize: 16, color: '#2563EB', fontWeight: 'bold' }}>05</Text>
+      <Text style={{ fontSize: 32, color: '#0B1E3F', fontWeight: 'bold' }}>问题与优化建议</Text>
+    </Box>
+    <Box style={{ width: '100%', height: 1, background: '#E2E8F0', marginTop: 14, marginBottom: 28 }} />
+
+    <Box style={{ flexDirection: 'column', gap: 20, flex: 1 }}>
+      {[
+        ['Agent 响应延迟', '多次串行大模型调用导致长回答生成偏慢', '引入知识缓存 + 并行化生成 + 流式输出，缩短首字响应时间', '#2563EB'],
+        ['知识库覆盖有限', '冷门学科或细分知识点可能缺乏高质量语料', '接入更多权威数据源，支持用户自定义知识导入与持续扩充', '#0EA5E9'],
+        ['情感表达待丰富', '桌宠情绪表达仍偏模板化，长期陪伴易显单调', '引入情绪建模与记忆，让回应更自然、更有变化与个性', '#F59E0B'],
+      ].map((item, idx) => (
+        <Box key={idx} style={{ background: '#FFFFFF', borderRadius: 12, border: '1px solid #E8EDF5', padding: '18px 22px', flexDirection: 'row', alignItems: 'center', gap: 18 }}>
+          <Box style={{ width: 46, height: 46, borderRadius: 12, background: item[3] + '1A', justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={{ fontSize: 22, color: item[3], fontWeight: 'bold' }}>{idx + 1}</Text>
+          </Box>
+          <Box style={{ flexDirection: 'column', width: 200 }}>
+            <Text style={{ fontSize: 20, color: '#1E293B', fontWeight: 'bold' }}>{item[0]}</Text>
+            <Text style={{ fontSize: 15, color: '#64748B', lineHeight: 1.4, marginTop: 3 }}>{item[1]}</Text>
+          </Box>
+          <Box style={{ width: 1, height: 60, background: '#E2E8F0' }} />
+          <Box style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, flex: 1 }}>
+            <FAIcon name='arrow-right' style={{ fill: item[3], width: 20, height: 20, marginTop: 2 }} />
+            <Text style={{ fontSize: 17, color: '#334155', lineHeight: 1.55, flex: 1, fontWeight: 'bold' }}>{item[2]}</Text>
+          </Box>
+        </Box>
+      ))}
+    </Box>
+
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 20, background: '#EFF6FF', borderRadius: 10, padding: '14px 18px' }}>
+      <FAIcon name='lightbulb' style={{ fill: '#F59E0B', width: 22, height: 22 }} />
+      <Text style={{ fontSize: 16, color: '#1E3A8A', lineHeight: 1.5 }}>整体优化方向：从「功能可用」走向「体验卓越」，让 AI 教育更懂、更快、更暖。</Text>
+    </Box>
+  </Box>
+</Slide>

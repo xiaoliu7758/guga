@@ -1,0 +1,44 @@
+<Slide>
+  <Box style={{ width: '100%', height: '100%', background: '#F8FAFC', padding: '60px 60px 60px 60px', flexDirection: 'column' }}>
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Text style={{ fontSize: 16, color: '#2563EB', fontWeight: 'bold' }}>05</Text>
+      <Text style={{ fontSize: 32, color: '#0B1E3F', fontWeight: 'bold' }}>风险识别与应对</Text>
+    </Box>
+    <Box style={{ width: '100%', height: 1, background: '#E2E8F0', marginTop: 14, marginBottom: 28 }} />
+
+    <Box style={{ flexDirection: 'row', gap: 28, flex: 1 }}>
+      {[
+        ['数据安全风险', 'shield', '#DC2626', ['学习者学习行为、画像等敏感数据可能泄露', '截图内容涉及个人隐私，需严格控制存储与访问'],
+         ['本地优先存储，最小化数据上云', '敏感数据脱敏与加密处理', '严格的访问权限控制与审计']],
+        ['内容准确性风险', 'exclamation-triangle', '#F59E0B', ['大模型可能产生幻觉，输出不准确的知识', '错误讲解可能误导学习者形成错误认知'],
+         ['权威知识库交叉校验，降低幻觉', '关键结论标注来源，可溯源核查', '对高风险学科启用人工复核机制']],
+      ].map((item, idx) => (
+        <Box key={idx} style={{ flex: 1, background: '#FFFFFF', borderRadius: 14, border: '1px solid #E8EDF5', padding: '24px 24px', flexDirection: 'column', gap: 16 }}>
+          <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <Box style={{ width: 50, height: 50, borderRadius: 12, background: item[2] + '1A', justifyContent: 'center', alignItems: 'center' }}>
+              <FAIcon name={item[1]} style={{ fill: item[2], width: 28, height: 28 }} />
+            </Box>
+            <Text style={{ fontSize: 23, color: '#1E293B', fontWeight: 'bold' }}>{item[0]}</Text>
+          </Box>
+
+          <Box style={{ background: '#FEF2F2', borderRadius: 10, padding: '14px 16px', flexDirection: 'column', gap: 6 }}>
+            <Text style={{ fontSize: 16, color: '#991B1B', fontWeight: 'bold' }}>风险表现</Text>
+            {item[3].map((r, i) => (
+              <Text key={i} style={{ fontSize: 15, color: '#7F1D1D', lineHeight: 1.5 }}>· {r}</Text>
+            ))}
+          </Box>
+
+          <Box style={{ background: '#F0FDF4', borderRadius: 10, padding: '14px 16px', flexDirection: 'column', gap: 6 }}>
+            <Text style={{ fontSize: 16, color: '#14532D', fontWeight: 'bold' }}>应对策略</Text>
+            {item[4].map((s, i) => (
+              <Box key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+                <FAIcon name='check-circle' style={{ fill: '#16A34A', width: 16, height: 16, marginTop: 3 }} />
+                <Text style={{ fontSize: 15, color: '#14532D', lineHeight: 1.5, flex: 1 }}>{s}</Text>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  </Box>
+</Slide>

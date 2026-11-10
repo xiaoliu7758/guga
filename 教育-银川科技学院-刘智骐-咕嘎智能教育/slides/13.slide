@@ -1,0 +1,55 @@
+<Slide>
+  <Box style={{ width: '100%', height: '100%', background: '#F8FAFC', padding: '60px 60px 60px 60px', flexDirection: 'column' }}>
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Text style={{ fontSize: 16, color: '#2563EB', fontWeight: 'bold' }}>05</Text>
+      <Text style={{ fontSize: 32, color: '#0B1E3F', fontWeight: 'bold' }}>结果解读：Agent 的应用价值</Text>
+    </Box>
+    <Box style={{ width: '100%', height: 1, background: '#E2E8F0', marginTop: 14, marginBottom: 28 }} />
+
+    <Box style={{ flexDirection: 'row', gap: 24, flex: 1 }}>
+      <Box style={{ flex: 1, background: '#FFFFFF', borderRadius: 12, border: '1px solid #E8EDF5', padding: '24px 24px', flexDirection: 'column', gap: 14 }}>
+        <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <FAIcon name='chart-line' style={{ fill: '#2563EB', width: 26, height: 26 }} />
+          <Text style={{ fontSize: 21, color: '#1E293B', fontWeight: 'bold' }}>实际场景下的预测结果</Text>
+        </Box>
+        <Text style={{ fontSize: 17, color: '#334155', lineHeight: 1.7 }}>
+          以「学习 Python 递归」为例，咕嘎的预测与适配链路如下：
+        </Text>
+        {[
+          ['识别意图', '从「帮我弄懂递归」自然语言中识别学习需求'],
+          ['画像适配', '判定学习者类型，选择讲解节奏与口吻'],
+          ['生成讲解', '产出结构化讲解 + 思维导图 + 自适应练习'],
+          ['调度复习', '按记忆曲线安排后续复习，巩固长期留存'],
+        ].map((item, idx) => (
+          <Box key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+            <Box style={{ width: 30, height: 30, borderRadius: 8, background: '#EFF6FF', justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={{ fontSize: 16, color: '#2563EB', fontWeight: 'bold' }}>{idx + 1}</Text>
+            </Box>
+            <Box style={{ flexDirection: 'column', flex: 1 }}>
+              <Text style={{ fontSize: 18, color: '#1E293B', fontWeight: 'bold' }}>{item[0]}</Text>
+              <Text style={{ fontSize: 15, color: '#64748B', lineHeight: 1.45, marginTop: 2 }}>{item[1]}</Text>
+            </Box>
+          </Box>
+        ))}
+      </Box>
+
+      <Box style={{ flex: 1, background: '#FFFFFF', borderRadius: 12, border: '1px solid #E8EDF5', padding: '24px 24px', flexDirection: 'column', gap: 14 }}>
+        <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <FAIcon name='gem' style={{ fill: '#F59E0B', width: 26, height: 26 }} />
+          <Text style={{ fontSize: 21, color: '#1E293B', fontWeight: 'bold' }}>产生的应用价值</Text>
+        </Box>
+        {[
+          ['学习效率提升', '个性化讲解减少无效信息，聚焦个体薄弱点'],
+          ['学习门槛降低', '自然语言交互 + 情感陪伴，无需学习成本'],
+          ['记忆留存增强', '间隔重复让知识从「学过」变「记住」'],
+          ['学习动力维持', '具身桌宠的情感反馈提升坚持度'],
+        ].map((item, idx) => (
+          <Box key={idx} style={{ background: '#F8FAFC', borderRadius: 10, padding: '16px 18px', flexDirection: 'column', gap: 6 }}>
+            <Text style={{ fontSize: 18, color: '#1E293B', fontWeight: 'bold' }}>{item[0]}</Text>
+            <Text style={{ fontSize: 15, color: '#64748B', lineHeight: 1.5 }}>{item[1]}</Text>
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  </Box>
+</Slide>

@@ -1,0 +1,55 @@
+<Slide>
+  <Box style={{ width: '100%', height: '100%', background: '#F8FAFC', padding: '60px 60px 60px 60px', flexDirection: 'column' }}>
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Text style={{ fontSize: 16, color: '#2563EB', fontWeight: 'bold' }}>02</Text>
+      <Text style={{ fontSize: 32, color: '#0B1E3F', fontWeight: 'bold' }}>知识库内容</Text>
+    </Box>
+    <Box style={{ width: '100%', height: 1, background: '#E2E8F0', marginTop: 14, marginBottom: 28 }} />
+
+    <Box style={{ flexDirection: 'row', gap: 24, flex: 1 }}>
+      <Box style={{ flex: 1, flexDirection: 'column', gap: 18 }}>
+        <Text style={{ fontSize: 20, color: '#1E293B', fontWeight: 'bold' }}>四类知识库模块</Text>
+        {[
+          ['学科知识图谱', '概念-关系-前置依赖的结构化存储，支撑「学什么教什么」的跨学科定位'],
+          ['题目与解析库', '分难度标注的练习题库，驱动自适应出题与错题归因'],
+          ['学习行为画像', '学习者风格、掌握度、错题记录，支撑个性化教学决策'],
+          ['复习调度模型', '基于 FSRS 的记忆曲线参数，支撑间隔重复提醒'],
+        ].map((item, idx) => (
+          <Box key={idx} style={{ background: '#FFFFFF', borderRadius: 12, border: '1px solid #E8EDF5', padding: '18px 20px', flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
+            <Box style={{ width: 34, height: 34, borderRadius: 9, background: '#EFF6FF', justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={{ fontSize: 17, color: '#2563EB', fontWeight: 'bold' }}>{idx + 1}</Text>
+            </Box>
+            <Box style={{ flexDirection: 'column', flex: 1 }}>
+              <Text style={{ fontSize: 19, color: '#1E293B', fontWeight: 'bold' }}>{item[0]}</Text>
+              <Text style={{ fontSize: 16, color: '#64748B', lineHeight: 1.5, marginTop: 4 }}>{item[1]}</Text>
+            </Box>
+          </Box>
+        ))}
+      </Box>
+
+      <Box style={{ flex: 1, background: '#FFFFFF', borderRadius: 12, border: '1px solid #E8EDF5', padding: '26px 26px', flexDirection: 'column', gap: 16 }}>
+        <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <FAIcon name='database' style={{ fill: '#0EA5E9', width: 26, height: 26 }} />
+          <Text style={{ fontSize: 20, color: '#1E293B', fontWeight: 'bold' }}>知识库价值说明</Text>
+        </Box>
+        <Text style={{ fontSize: 17, color: '#334155', lineHeight: 1.7 }}>
+          知识库是咕嘎从「会聊天」升级为「<span style={{ fontWeight: 'bold', color: '#2563EB' }}>会教</span>」的基石。它把散落的知识点组织成<span style={{ fontWeight: 'bold' }}>可查询、可推理、可调度</span>的结构化资产：
+        </Text>
+        {[
+          ['结构化', '知识点不再是孤立文本，而是带关系与依赖的图'],
+          ['可溯源', '每个结论可回溯到权威来源，保证教学可信'],
+          ['可进化', '随学习者反馈与错题持续更新，越用越懂你'],
+        ].map((item, idx) => (
+          <Box key={idx} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, background: '#F8FAFC', borderRadius: 10, padding: '14px 16px' }}>
+            <Box style={{ width: 10, height: 10, borderRadius: 5, background: '#0EA5E9' }} />
+            <Text style={{ fontSize: 17, color: '#1E293B', fontWeight: 'bold', width: 64 }}>{item[0]}</Text>
+            <Text style={{ fontSize: 15, color: '#64748B', flex: 1 }}>{item[1]}</Text>
+          </Box>
+        ))}
+        <Text style={{ fontSize: 15, color: '#94A3B8', lineHeight: 1.5 }}>
+          知识库引入后，咕嘎在回答学科问题时，不再依赖「一次性生成」，而是基于结构化知识进行<span style={{ fontWeight: 'bold', color: '#0EA5E9' }}>有依据、可递进</span>的讲解。
+        </Text>
+      </Box>
+    </Box>
+  </Box>
+</Slide>

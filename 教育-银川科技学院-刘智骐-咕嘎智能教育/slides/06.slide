@@ -1,0 +1,73 @@
+<Slide>
+  <Box style={{ width: '100%', height: '100%', background: '#F8FAFC', padding: '60px 60px 60px 60px', flexDirection: 'column' }}>
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Text style={{ fontSize: 16, color: '#2563EB', fontWeight: 'bold' }}>02</Text>
+      <Text style={{ fontSize: 32, color: '#0B1E3F', fontWeight: 'bold' }}>预处理与利用流程</Text>
+    </Box>
+    <Box style={{ width: '100%', height: 1, background: '#E2E8F0', marginTop: 14, marginBottom: 24 }} />
+
+    {/* 流程图（SVG） */}
+    <svg width={1160} height={180} viewBox='0 0 1160 180'>
+      {[
+        [40, '数据采集', '#2563EB'],
+        [280, '清洗去重', '#0EA5E9'],
+        [520, '结构化入库', '#6366F1'],
+        [760, '向量化索引', '#8B5CF6'],
+        [1000, 'Agent 调用', '#F59E0B'],
+      ].map((n, i) => (
+        <g key={i}>
+          <rect x={n[0]} y={50} width={160} height={70} rx={12} fill={n[2]} />
+          <text x={n[0] + 80} y={80} textAnchor='middle' fill='#FFFFFF' fontSize='19' fontWeight='bold'>{n[1]}</text>
+          <text x={n[0] + 80} y={101} textAnchor='middle' fill='#FFFFFF' fontSize='12' opacity='0.85'>步骤 {i + 1}</text>
+          {i < 4 && (
+            <g>
+              <line x1={n[0] + 160} y1={85} x2={n[0] + 210} y2={85} stroke='#94A3B8' strokeWidth='2' />
+              <polygon points={(n[0] + 210) + ',85 ' + (n[0] + 198) + ',79 ' + (n[0] + 198) + ',91'} fill='#94A3B8' />
+            </g>
+          )}
+        </g>
+      ))}
+    </svg>
+
+    <Box style={{ flexDirection: 'row', gap: 20, marginTop: 20, flex: 1 }}>
+      <Box style={{ flex: 1, background: '#FFFFFF', borderRadius: 12, border: '1px solid #E8EDF5', padding: '18px 20px', flexDirection: 'column', gap: 10 }}>
+        <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <FAIcon name='cog' style={{ fill: '#2563EB', width: 22, height: 22 }} />
+          <Text style={{ fontSize: 20, color: '#1E293B', fontWeight: 'bold' }}>技术手段与工具</Text>
+        </Box>
+        {[
+          ['截图 API', '屏幕视觉捕获 + 多模态语义提取'],
+          ['REST / LLM API', '知识提炼、导图、出题等结构化生成'],
+          ['向量数据库', '知识条目向量化，支撑检索召回'],
+          ['FSRS 调度引擎', '记忆曲线建模，驱动间隔重复复习'],
+        ].map((item, idx) => (
+          <Box key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+            <Box style={{ width: 6, height: 6, borderRadius: 3, background: '#2563EB', marginTop: 7 }} />
+            <Box style={{ flexDirection: 'column', flex: 1 }}>
+              <Text style={{ fontSize: 17, color: '#1E293B', fontWeight: 'bold' }}>{item[0]}</Text>
+              <Text style={{ fontSize: 15, color: '#64748B', lineHeight: 1.4, marginTop: 2 }}>{item[1]}</Text>
+            </Box>
+          </Box>
+        ))}
+      </Box>
+
+      <Box style={{ flex: 1, background: '#EFF6FF', borderRadius: 12, padding: '18px 20px', flexDirection: 'column', gap: 10 }}>
+        <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <FAIcon name='brain' style={{ fill: '#6366F1', width: 22, height: 22 }} />
+          <Text style={{ fontSize: 20, color: '#1E293B', fontWeight: 'bold' }}>在 AI Agent 设计中的用途</Text>
+        </Box>
+        {[
+          '清洗去重 → 保证知识库纯净，减少幻觉来源',
+          '结构化入库 → 可查询、可推理、可溯源',
+          '向量化索引 → 快速定位知识点，缩短响应',
+          '调度引擎 → 个性化复习，提升记忆留存',
+        ].map((item, idx) => (
+          <Box key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+            <FAIcon name='arrow-right' style={{ fill: '#6366F1', width: 16, height: 16, marginTop: 4 }} />
+            <Text style={{ fontSize: 16, color: '#334155', lineHeight: 1.5, flex: 1 }}>{item}</Text>
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  </Box>
+</Slide>

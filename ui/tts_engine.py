@@ -50,6 +50,8 @@ class TTSEngine(QObject):
 
     speak_finished = pyqtSignal()
     speak_started = pyqtSignal(str)
+    playback_started = pyqtSignal(str)
+    speech_failed = pyqtSignal(str)
 
     EDGE_VOICE = "zh-CN-XiaoyiNeural"   # 软萌少女音
     EDGE_RATE = "+15%"
@@ -83,7 +85,9 @@ class TTSEngine(QObject):
         self._session = None
         self._speak_token = 0   # 每次 speak 自增, 用于失效旧请求
         self._current_token = 0  # 当前正在播放的 token
-        # 分段朗读队列
+        self._display_text = ''
+        self._playback_announced = False
+        # 分段朗读队列（解决长回答念不全：edge-tts 单次合成有长度上限）
         self._segments = []
         self._seg_index = 0
         self._voice_profile = None
@@ -91,20 +95,10 @@ class TTSEngine(QObject):
         try:
             cfg_path = os.path.join(os.path.dirname(__file__), '..', 'ai_config.json')
             with open(cfg_path, encoding='utf-8-sig') as f:
-                _cfg = json.load(f)
+                self.DOUBAO_API_KEY = json.load(f).get('doubao_tts_api_key', '')
         except Exception:
-            _cfg = {}
-        self.DOUBAO_API_KEY = _cfg.get('doubao_tts_api_key', '')
+            self.DOUBAO_API_KEY = ''
         self._use_doubao = bool(self.DOUBAO_API_KEY)
-
-        # 千问 TTS 兜底: edge-tts 被墙/超时时改用 dashscope qwen3-tts-flash
-        _tts_cfg = _cfg.get('tts') or {}
-        _qwen_key = str(_tts_cfg.get('qwen_api_key') or _cfg.get('api_key') or '').strip()
-        self.QWEN_TTS_KEY = '' if _qwen_key.startswith('YOUR_') else _qwen_key
-        self.QWEN_TTS_MODEL = _tts_cfg.get('qwen_model', 'qwen3-tts-flash')
-        self.QWEN_TTS_VOICE = _tts_cfg.get('qwen_voice', 'Cherry')
-        self.QWEN_TTS_ENABLED = bool(_tts_cfg.get('qwen_enabled', True))
-        self._use_qwen = bool(self.QWEN_TTS_KEY) and self.QWEN_TTS_ENABLED
         self._use_edge = self._check_edge_tts()
 
         if self._use_doubao:
@@ -123,7 +117,6 @@ class TTSEngine(QObject):
 
         print(f"[TTS] edge-tts(软萌音): {'可用' if self._use_edge else '不可用'}")
         print(f"[TTS] 豆包语音V3: {'可用' if self._use_doubao else '未配置'}")
-        print(f"[TTS] 千问兜底({self.QWEN_TTS_MODEL}): {'可用' if self._use_qwen else '未配置'}")
 
     # ---- 依赖检查 ----
     def _check_edge_tts(self):
@@ -144,8 +137,10 @@ class TTSEngine(QObject):
         self._stop_playback()
         self._speak_token += 1
         self._is_speaking = True
-        # 分段：edge-tts 单次合成有长度上限，超长文本切成多段逐段播放，保证念全
-        self._segments = _split_segments(text)
+        self._display_text = text
+        self._playback_announced = False
+        # 分段：超长文本切成多段逐段播放，保证念全（修复长回答念不全）
+        self._segments = self._split_segments(text)
         self._voice_profile = dict(voice_profile) if voice_profile else None
         self._seg_index = 0
         self.speak_started.emit(text)
@@ -163,8 +158,11 @@ class TTSEngine(QObject):
 
     @staticmethod
     def _split_segments(text: str, max_len: int = 280):
-        """把长文本按句子边界切成若干段，每段不超过 max_len 字，尽量在句号处断开。"""
-        # 先按常见句末标点切分句子，再贪心合并到不超过 max_len
+        """把长文本按句子边界切成若干段，每段不超过 max_len 字，尽量在句号处断开。
+
+        edge-tts 单次合成有长度上限，超长文本会被截断导致"念不全"。
+        这里按句末标点切分后贪心合并，保证每一段都能完整合成播放。
+        """
         sentences = re.split(r'(?<=[。！？!?])', text)
         segments = []
         cur = ''
@@ -198,6 +196,8 @@ class TTSEngine(QObject):
             except Exception:
                 pass
         self._is_speaking = False
+        self._display_text = ''
+        self._playback_announced = False
         self._segments = []
         self._seg_index = 0
         self._cleanup_temp()
@@ -219,13 +219,6 @@ class TTSEngine(QObject):
             # A failed companion voice must not silently become Guga's fallback.
             if not success and self._use_doubao and not voice_profile:
                 success = self._synth_doubao(text, tmp_path)
-            # 最后兜底: 千问 TTS(返回 wav, 单独一个文件, 成功后替换播放路径)
-            if not success and self._use_qwen and not voice_profile:
-                wav_path = self._synth_qwen(text, os.path.splitext(tmp_path)[0] + '.wav')
-                if wav_path:
-                    self._safe_remove(tmp_path)
-                    tmp_path = wav_path
-                    success = True
 
             if not success:
                 # 失败: 清掉空文件, 通知主线程收尾
@@ -334,45 +327,6 @@ class TTSEngine(QObject):
             self._safe_remove(out_path)
             return False
 
-    def _synth_qwen(self, text: str, out_path: str):
-        """千问 TTS 兜底: 返回 wav 文件路径, 失败返回 None
-
-        dashscope 只返回 wav 的临时下载地址, 所以单独落地成 .wav 再交给播放器,
-        不能写进 .mp3 临时文件, 否则 QMediaPlayer 按扩展名选解析器会失败。
-        """
-        try:
-            import requests
-            resp = requests.post(
-                "https://dashscope.aliyuncs.com/api/v1/services/aigc/"
-                "multimodal-generation/generation",
-                headers={
-                    "Authorization": f"Bearer {self.QWEN_TTS_KEY}",
-                    "Content-Type": "application/json",
-                },
-                json={"model": self.QWEN_TTS_MODEL,
-                      "input": {"text": text, "voice": self.QWEN_TTS_VOICE}},
-                timeout=30,
-            )
-            if resp.status_code != 200:
-                print(f"[TTS] 千问TTS HTTP {resp.status_code}: {resp.text[:120]}",
-                      file=sys.stderr)
-                return None
-            url = (((resp.json().get("output") or {}).get("audio") or {}).get("url") or "")
-            if not url:
-                print("[TTS] 千问TTS 未返回音频地址", file=sys.stderr)
-                return None
-            audio = requests.get(url, timeout=30)
-            if audio.status_code != 200 or len(audio.content) <= 100:
-                print(f"[TTS] 千问TTS 下载失败 {audio.status_code}", file=sys.stderr)
-                return None
-            with open(out_path, 'wb') as f:
-                f.write(audio.content)
-            return out_path
-        except Exception as e:
-            print(f"[TTS] 千问TTS 错误: {e}", file=sys.stderr)
-            self._safe_remove(out_path)
-            return None
-
     # ---- 主线程槽: 合成完成 ----
     def _on_synth_ready(self, token: int, path: str):
         # 若已经被新的 speak / stop 失效, 直接清理不播放
@@ -399,6 +353,7 @@ class TTSEngine(QObject):
             print(f"[TTS] 播放错误: {e}", file=sys.stderr)
             self._safe_remove(path)
             self._is_speaking = False
+            self.speech_failed.emit('本机语音播放失败')
             try:
                 self.speak_finished.emit()
             except Exception:
@@ -408,18 +363,25 @@ class TTSEngine(QObject):
         if token != self._speak_token:
             return
         self._is_speaking = False
+        self.speech_failed.emit('本机语音合成失败')
         try:
             self.speak_finished.emit()
         except Exception:
             pass
 
     def _on_state_changed(self, state):
+        if state == QMediaPlayer.PlayingState and self._is_speaking and not self._playback_announced:
+            self._playback_announced = True
+            try:self.playback_started.emit(self._display_text)
+            except Exception:pass
         if state == QMediaPlayer.StoppedState and self._is_speaking:
             # 一段播完：还有下一段则继续合成播放，否则才算真正结束
             if self._seg_index < len(self._segments):
                 self._play_segment()
                 return
             self._is_speaking = False
+            self._display_text = ''
+            self._playback_announced = False
             self._cleanup_temp()
             try:
                 self.speak_finished.emit()
@@ -444,18 +406,17 @@ class TTSEngine(QObject):
             pass
 
     def _cleanup_stale_tmp(self):
-        """启动时清理上次崩溃/强杀残留的临时音频 (只清前缀 _TMP_PREFIX)"""
+        """启动时清理上次崩溃/强杀残留的临时 mp3 (只清前缀 _TMP_PREFIX)"""
         try:
             tmp_dir = tempfile.gettempdir()
             now = time.time()
-            for pattern in ('*.mp3', '*.wav'):
-                for f in glob.glob(os.path.join(tmp_dir, _TMP_PREFIX + pattern)):
-                    try:
-                        # 只清 1 天以内的(避免误删他人文件), 老文件系统自己会清
-                        if now - os.path.getmtime(f) < 86400:
-                            os.remove(f)
-                    except Exception:
-                        continue
+            for f in glob.glob(os.path.join(tmp_dir, _TMP_PREFIX + '*.mp3')):
+                try:
+                    # 只清 1 天以内的(避免误删他人文件), 老文件系统自己会清
+                    if now - os.path.getmtime(f) < 86400:
+                        os.remove(f)
+                except Exception:
+                    continue
         except Exception:
             pass
 

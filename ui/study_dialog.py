@@ -32,6 +32,7 @@ class StudyDialog(QDialog):
         self.resize(680, 560)
         self.setMinimumSize(480, 420)
         self._busy = False
+        self._done.connect(self._on_result)
         self.setStyleSheet('''
             QDialog{background:#f7f9fc;}
             QLabel#hint{color:#7a8294;font:11px "Microsoft YaHei UI";}
@@ -83,7 +84,6 @@ class StudyDialog(QDialog):
         self._busy = True
         self.hint.setText(msg)
         self.tabs.clear()
-        self._done.result.connect(self._on_result)
         self.show()
         self.raise_()
         self.activateWindow()
@@ -146,8 +146,17 @@ class StudyDialog(QDialog):
         w = QWidget()
         lay = QVBoxLayout(w)
         b = self._browser()
+        # 兼容新结构：quiz 可能是 {'questions': [...], 'path': ...}，也可能是旧列表
+        if isinstance(quiz, dict):
+            quiz_path = quiz.get('path', '')
+            questions = quiz.get('questions', [])
+        else:
+            quiz_path = ''
+            questions = quiz or []
         parts = ['<h2>自测题</h2>']
-        for i, q in enumerate(quiz, 1):
+        if quiz_path:
+            parts.append(f'<p><a href="file:///{html.escape(quiz_path)}">打开自测题 JSON（完整题目与解析）</a></p>')
+        for i, q in enumerate(questions, 1):
             qtype = q.get('type', 'choice')
             parts.append(f'<h3>{i}. {html.escape(q.get("question", ""))}</h3>')
             if qtype == 'choice':

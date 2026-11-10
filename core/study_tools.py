@@ -199,11 +199,14 @@ def _unique(path):
     return path
 
 
-def mindmap(text=None, image_b64=None, title=None):
-    """基于文本/截图生成思维导图，返回 dict(outline, html, title)。"""
-    knowledge = None
-    if image_b64:
-        knowledge = extract_knowledge(image_b64=image_b64)
+def mindmap(text=None, image_b64=None, title=None, knowledge=None):
+    """基于文本/截图生成思维导图，返回 dict(outline, html, title)。
+
+    knowledge 为已提取的知识点 dict，可复用避免重复调用视觉/文本理解。
+    """
+    if knowledge is None:
+        if image_b64:
+            knowledge = extract_knowledge(image_b64=image_b64)
     outline = None
     if knowledge:
         outline = _outline_from_knowledge(knowledge)
@@ -253,9 +256,10 @@ def expand_knowledge(topic_name, topic_detail=''):
     return text
 
 
-def expand_from_screen(text=None, image_b64=None, save=True):
+def expand_from_screen(text=None, image_b64=None, save=True, knowledge=None):
     """从截图/文本提炼知识点，并对第一个知识点做拓展。返回 dict。"""
-    knowledge = extract_knowledge(text=text, image_b64=image_b64)
+    if knowledge is None:
+        knowledge = extract_knowledge(text=text, image_b64=image_b64)
     if not knowledge or not knowledge.get('topics'):
         return None
     topics = knowledge['topics']
@@ -285,9 +289,10 @@ QUIZ_PROMPT = """你是学习助教。根据下面的学习内容出 3 道自测
 """
 
 
-def quiz(text=None, image_b64=None):
+def quiz(text=None, image_b64=None, knowledge=None):
     """根据内容出题。返回 [题目] 列表，失败返回 None。"""
-    knowledge = extract_knowledge(text=text, image_b64=image_b64)
+    if knowledge is None:
+        knowledge = extract_knowledge(text=text, image_b64=image_b64)
     if knowledge:
         # 用提炼出的知识点作为题目素材，更聚焦
         src = json.dumps(knowledge, ensure_ascii=False)
@@ -337,9 +342,10 @@ FLASHCARD_PROMPT = """你是学习助教。根据下面的学习内容，生成 
 """
 
 
-def flashcards(text=None, image_b64=None):
+def flashcards(text=None, image_b64=None, knowledge=None):
     """生成复习卡片列表。返回 [卡片] 列表，失败返回 None。"""
-    knowledge = extract_knowledge(text=text, image_b64=image_b64)
+    if knowledge is None:
+        knowledge = extract_knowledge(text=text, image_b64=image_b64)
     if knowledge:
         src = json.dumps(knowledge, ensure_ascii=False)
     elif text:
@@ -372,6 +378,18 @@ def _save_cards(cards):
     return str(path)
 
 
+def _save_quiz(questions, title=None):
+    """把自测题落盘成独立 JSON 文件（题目全文留在文件里，不塞回对话）。"""
+    if not questions:
+        return None
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    safe = re.sub(r'[\\/:*?"<>|]', '', str(title or '自测题'))[:30] or '自测题'
+    path = _unique(DATA_DIR / (safe + '.quiz.json'))
+    payload = {'title': title or '自测题', 'count': len(questions), 'questions': questions}
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
+    return str(path)
+
+
 def import_cards_to_srs(cards):
     """把生成的卡片加入 FSRS 复习库（写为 unknown 掌握度的理解模型概念）。"""
     imported = 0
@@ -397,27 +415,70 @@ def study_package(text=None, image_b64=None, title=None, want=('mindmap', 'expan
     """一键从截图/文本生成一个学习包。
 
     返回 dict，键为已成功生成的部分；各部分独立降级，互不影响。
+
+    性能优化：只提取一次知识点（避免重复走视觉/文本理解），
+    并把 expand / quiz / cards 三个互不依赖的生成请求并行执行，
+    把原先 6-7 次串行请求压缩到「1 次提取 + 1 轮并行」，显著缩短耗时。
     """
+    from concurrent.futures import ThreadPoolExecutor
     result = {'ok': True}
+    want = tuple(want)
+
+    # 1) 只提取一次知识点（截图时尤其昂贵，避免 4-5 次重复视觉调用）
+    knowledge = None
+    if any(w in want for w in ('mindmap', 'expand', 'quiz', 'cards')):
+        if image_b64 or (text and str(text).strip()):
+            knowledge = extract_knowledge(text=text, image_b64=image_b64)
+
+    # 2) 思维导图：复用 knowledge，纯本地生成大纲（无额外请求）
     if 'mindmap' in want:
-        mm = mindmap(text=text, image_b64=image_b64, title=title)
+        mm = mindmap(text=text, image_b64=image_b64, title=title, knowledge=knowledge)
         if mm:
             result['mindmap'] = mm
+
+    # 3) expand / quiz / cards：互不依赖，并行生成
+    tasks = {}
     if 'expand' in want:
-        exp = expand_from_screen(text=text, image_b64=image_b64, save=True)
-        if exp:
-            result['expand'] = {'title': exp['title'], 'focus': exp['focus'],
-                                'expansion': exp['expansion'], 'path': exp.get('path')}
+        tasks['expand'] = ('expand',)
     if 'quiz' in want:
-        qz = quiz(text=text, image_b64=image_b64)
-        if qz:
-            result['quiz'] = qz
+        tasks['quiz'] = ('quiz',)
     if 'cards' in want:
-        cards = flashcards(text=text, image_b64=image_b64)
+        tasks['cards'] = ('cards',)
+
+    def _expand():
+        exp = expand_from_screen(text=text, image_b64=image_b64, save=True, knowledge=knowledge)
+        if exp:
+            return {'title': exp['title'], 'focus': exp['focus'],
+                    'expansion': exp['expansion'], 'path': exp.get('path')}
+        return None
+
+    def _quiz():
+        qz = quiz(text=text, image_b64=image_b64, knowledge=knowledge)
+        if qz:
+            qpath = _save_quiz(qz, title=title)
+            return {'questions': qz, 'path': qpath}
+        return None
+
+    def _cards():
+        cards = flashcards(text=text, image_b64=image_b64, knowledge=knowledge)
         if cards:
             path = _save_cards(cards)
             imported = import_cards_to_srs(cards)
-            result['cards'] = {'cards': cards, 'path': path, 'imported_srs': imported}
+            return {'cards': cards, 'path': path, 'imported_srs': imported}
+        return None
+
+    fn_map = {'expand': _expand, 'quiz': _quiz, 'cards': _cards}
+    if tasks:
+        with ThreadPoolExecutor(max_workers=len(tasks)) as pool:
+            futures = {k: pool.submit(fn_map[k]) for k in tasks}
+            for k, fut in futures.items():
+                try:
+                    val = fut.result(timeout=180)
+                except Exception:
+                    val = None
+                if val:
+                    result[k] = val
+
     if len(result) == 1:  # 只有 ok=True，说明全都失败
         result['ok'] = False
         result['error'] = '未能从该内容生成学习产物，请确认截图清晰或文本非空、聊天 API 已配置'
@@ -515,4 +576,63 @@ def study_from_source(url=None, file_path=None, text=None, title=None,
     if not content:
         return {'ok': False, 'error': '没有可分析的内容'}
     return study_package(text=content, title=title, want=want)
+
+
+# --------------------------------------------------------------------------
+# 主题成文：给定一个知识点/主题 → 结构化文档 + 思维导图
+# --------------------------------------------------------------------------
+
+TOPIC_DOC_PROMPT = """你是学习助教。围绕下面这个主题/知识点，写一份结构清晰、便于复习的学习文档。
+要求（用 Markdown 组织）：
+## 核心概念 —— 用 1-2 句话讲清这个主题是什么
+## 要点拆解 —— 拆成 3-6 个关键要点，每个用 - 列表 + 一句话说明
+## 示例或类比 —— 给 1-2 个具体例子或生活化类比，帮助理解
+## 快速复习总结 —— 用 2-3 句话或几个关键词，方便快速回忆
+说明：语言简洁、易读、便于后续编辑；详细程度根据主题复杂程度自动调整，不要过度冗长。
+只输出文档正文，不要任何额外解释。
+
+主题：
+"""
+
+
+def topic_document(topic, detail='auto', save=True, title=None, want=('document', 'mindmap')):
+    """从主题名生成结构化学习文档 + 可选思维导图。
+
+    参数：
+      - topic: 主题/知识点名称（必填）
+      - detail: 'auto'（默认，按主题复杂程度自动）| 'brief' 简洁 | 'full' 详细
+      - save: 是否落盘
+      - want: 要生成的产物，可含 'document' / 'mindmap'
+
+    返回 dict：
+      - ok, title, document(路径), document_text(正文), mindmap(路径 dict)
+    失败降级：LLM 不可用时返回 None。
+    """
+    topic = str(topic or '').strip()
+    if not topic:
+        return {'ok': False, 'error': '请提供主题/知识点名称'}
+    # 详细程度指令
+    detail_hint = {
+        'auto': '详细程度根据主题复杂程度自动调整，默认简洁易读',
+        'brief': '尽量简洁，抓核心，点到为止',
+        'full': '尽量详细，覆盖背景、原理、细节、易错点',
+    }.get(detail, 'auto')
+    prompt = TOPIC_DOC_PROMPT.replace(
+        '详细程度根据主题复杂程度自动调整，不要过度冗长。', detail_hint + '。') + topic
+    doc_text = _chat([{'role': 'user', 'content': prompt}], max_tokens=3000, temperature=0.4)
+    if not doc_text:
+        return {'ok': False, 'error': '文档生成失败：聊天 API 未配置或调用失败'}
+    result = {'ok': True, 'title': title or topic[:40], 'document_text': doc_text}
+    if save:
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        safe_title = re.sub(r'[\\/:*?"<>|]', '', title or topic)[:40] or '主题'
+        if 'document' in want:
+            doc_path = _unique(DATA_DIR / (safe_title + '.md'))
+            doc_path.write_text('# ' + (title or topic) + '\n\n' + doc_text, encoding='utf-8')
+            result['document'] = str(doc_path)
+        if 'mindmap' in want:
+            mm = mindmap(text=doc_text, title=title or topic)
+            if mm:
+                result['mindmap'] = {'outline': mm.get('outline'), 'html': mm.get('html')}
+    return result
 
